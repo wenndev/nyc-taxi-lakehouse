@@ -1,0 +1,12 @@
+fact_trips*.csv
+*.parquet
+
+*:Zone.Identifier
+
+__pycache__/
+*.pyc
+.env
+
+*.key
+*.secret
+EOF
