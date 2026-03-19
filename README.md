@@ -162,7 +162,7 @@ Total: **366 registros** (2024 é ano bissexto)
 | Campo | Tipo | Descrição |
 |---|---|---|
 | localizacao_id | int (PK) | Chave surrogate |
-| bairro | string | Borough de NYC (Manhattan, Queens, Bronx, Brooklyn, Staten Island, EWR) |
+| bairro | string | Bairro de NYC (Manhattan, Queens, Bronx, Brooklyn, Staten Island, EWR) |
 | zona | string | Nome da zona de táxi |
 | zona_servico | string | Tipo de serviço (Yellow Zone, Boro Zone, EWR) |
 
