@@ -170,6 +170,8 @@ Total: **263 zonas** — enriquecida com NYC Taxi Zone lookup table
 
 > Zonas 264 (Unknown) e 265 (Outside of NYC) foram removidas por não aparecerem nas corridas do dataset.
 
+> **Nota sobre o repositório atual:** na versão publicada no GitHub, o notebook Gold versionado constrói a base da dimensão a partir dos `LocationID` presentes nas corridas. O enriquecimento final com a **Taxi Zone Lookup Table** (campos `bairro`, `zona` e `zona_servico`) foi realizado localmente para a publicação da versão final no Kaggle. Na próxima evolução do projeto, essa etapa será incorporada ao pipeline automatizado quando o ambiente Azure for retomado.
+
 #### dim_clima
 
 | Campo | Tipo | Descrição |
