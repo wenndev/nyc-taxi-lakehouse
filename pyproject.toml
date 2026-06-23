@@ -1,0 +1,33 @@
+[project]
+name = "nyc-taxi-lakehouse"
+version = "2.0.0"
+description = "NYC Taxi Lakehouse V2 local-first refactor."
+authors = [
+    { name = "Delldev" },
+]
+readme = "README.md"
+requires-python = ">=3.11,<3.12"
+dependencies = [
+    "pyspark==4.1.1",
+    "delta-spark==4.2.0",
+]
+
+[dependency-groups]
+dev = [
+    "ipykernel==7.2.0",
+    "jupyterlab==4.5.8",
+]
+
+[project.scripts]
+ingest-nyc-tlc = "v2.pipelines.ingestion.download_nyc_tlc:main"
+bronze-nyc-tlc = "v2.pipelines.bronze.bronze_nyc_tlc:main"
+silver-nyc-tlc = "v2.pipelines.silver.silver_nyc_tlc:main"
+
+[tool.poetry]
+packages = [
+    { include = "v2" },
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"

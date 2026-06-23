@@ -6,7 +6,11 @@ fact_trips*.csv
 __pycache__/
 *.pyc
 .env
+.venv/
+.pytest_cache/
+data/raw/
+v2/data/raw/
+v2/data/delta/
 
 *.key
 *.secret
-EOF

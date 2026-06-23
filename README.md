@@ -2,6 +2,8 @@
 
 > Pipeline de dados completo em arquitetura Lakehouse para análise da relação entre condições climáticas e demanda de corridas de táxi em Nova York.
 
+> Status: a V1 Azure/Databricks esta preservada em [v1/](v1/). A refatoracao local esta sendo feita separadamente em [v2/](v2/README.md), comecando pela ingestion da NYC TLC 2025.
+
 ---
 
 ## Visão Geral
@@ -16,7 +18,7 @@ A arquitetura segue o padrão **Medallion Architecture** (Bronze → Silver → 
 
 ## Arquitetura
 
-![Arquitetura do Pipeline](docs/etl.png)
+![Arquitetura do Pipeline](v1/docs/etl.png)
 
 
 
@@ -70,7 +72,7 @@ realizando múltiplas chamadas por mês até esgotar todos os registros disponí
 ---
 
 ## Pipeline Azure Data Factory 
-![Pipeline ADF](docs/pipeline_adf.png)
+![Pipeline ADF](v1/docs/pipeline_adf.png)
 
 O pipeline orquestrador executa em sequência:
 
@@ -93,10 +95,10 @@ Parâmetros do pipeline:
 ### pipeline_transformacao_dados
 Executa o notebook do Databricks com `%run` de todas as camadas em sequência:
 ```python
-%run ./bronze/bronze_noaa_weather_2024
-%run ./silver/silver_nyc_tlc_yellow_2024
-%run ./silver/silver_noaa_weather_2024
-%run ./gold/clima_taxi
+%run ./v1/bronze/bronze_noaa_weather_2024
+%run ./v1/silver/silver_nyc_tlc_yellow_2024
+%run ./v1/silver/silver_noaa_weather_2024
+%run ./v1/gold/clima_taxi
 ```
 
 ---
@@ -140,7 +142,7 @@ Durante o desenvolvimento, o uso de `dropna()` genérico removia dados excessiva
 
 ### Gold — Modelo Dimensional (Star Schema)
 
-![Modelagem](docs/modelagem.png)
+![Modelagem](v1/docs/modelagem.png)
 
 #### dim_data
 
@@ -325,35 +327,22 @@ Essa validação comprova que o monitoramento está operacional e não apenas co
 ```
 nyc-taxi-lakehouse/
 │
-├── bronze/
-│   ├── bronze_nyc_tlc_2024.py         # Ingestão NYC TLC: lê .parquet e salva como Delta
-│   └── bronze_noaa_weather_2024.py    # Ingestão NOAA: lê .json e salva como Delta
+├── v1/                                # Versao original Azure/Databricks
+│   ├── bronze/
+│   ├── silver/
+│   ├── gold/
+│   ├── pipeline/
+│   ├── data/                          # Exports CSV da Gold V1
+│   ├── docs/                          # Imagens/documentacao da V1
+│   └── config_adls.py
 │
-├── silver/
-│   ├── silver_nyc_tlc_yellow_2024.py  # Limpeza e padronização das corridas NYC TLC
-│   └── silver_noaa_weather_2024.py    # Limpeza e padronização dos dados climáticos NOAA
+├── v2/                                # Refatoracao local-first
+│   ├── common/                        # Caminhos e Spark local
+│   ├── bronze/                        # Bronze local em andamento
+│   ├── silver/                        # Proxima etapa
+│   ├── gold/                          # Etapa posterior
+│   └── checks/                        # Validacoes locais
 │
-├── gold/
-│   └── clima_taxi.py                  # Modelo dimensional: dim_data, dim_localizacao, dim_clima, fact_trips
-│
-├── pipeline/
-│   └── pipeline_orquestracao.py       # Notebook orquestrador: executa todas as camadas em sequência
-│
-├── data/
-│   ├── dim_data.csv                   # 366 registros — datas de 2024
-│   ├── dim_localizacao.csv            # 263 registros — zonas NYC TLC
-│   └── dim_clima.csv                  # 38 registros — dados climáticos NOAA
-│
-├── docs/
-│   ├── etl.png                        # Diagrama da arquitetura do pipeline
-│   ├── pipeline_adf.png               # Print do pipeline orquestrador no ADF
-│   ├── modelagem.png                  # Diagrama do modelo dimensional (Star Schema)
-│   ├── print_df_dim_clima.png         # Print da dim_clima no Databricks
-│   ├── print_df_dim_data.png          # Print da dim_data no Databricks
-│   ├── print_df_dim_localizacao.png   # Print da dim_localizacao no Databricks
-│   └── print_df_trips.png             # Print da fact_trips no Databricks
-│
-├── config_adls.py                     # Configuração de acesso ao ADLS Gen2 + função obter_caminho()
 ├── .gitignore
 └── README.md
 ```
