@@ -21,7 +21,7 @@ def main() -> int:
 
     validate_month_range(args.start_month, args.end_month)
 
-    output_dir = Path(args.output) if args.output else nyc_tlc_raw_dir(args.year)
+    output_dir = resolve_output_dir(args.output, nyc_tlc_raw_dir(args.year))
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for month in range(args.start_month, args.end_month + 1):
@@ -60,6 +60,26 @@ def validate_month_range(start_month: int, end_month: int) -> None:
         raise ValueError("Mes inicial nao pode ser maior que mes final")
 
 
+def resolve_output_dir(output: str | None, default_output: Path) -> Path:
+    if not output:
+        return default_output
+
+    if output.startswith("abfss://"):
+        raise ValueError(
+            "Direct abfss:// output is not supported by this raw Python downloader. "
+            "On Databricks, use a filesystem path backed by ADLS, such as /Volumes/... "
+            "or /dbfs/mnt/..."
+        )
+
+    return Path(normalize_databricks_path(output))
+
+
+def normalize_databricks_path(path: str) -> str:
+    if path.startswith("dbfs:/"):
+        return f"/dbfs/{path.removeprefix('dbfs:/').lstrip('/')}"
+
+    return path
+
+
 if __name__ == "__main__":
     raise SystemExit(main())
-

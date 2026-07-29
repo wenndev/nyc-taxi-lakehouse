@@ -20,8 +20,12 @@ dev = [
 
 [project.scripts]
 ingest-nyc-tlc = "v2.pipelines.ingestion.download_nyc_tlc:main"
+ingest-noaa-weather = "v2.pipelines.ingestion.download_noaa_weather:main"
 bronze-nyc-tlc = "v2.pipelines.bronze.bronze_nyc_tlc:main"
 silver-nyc-tlc = "v2.pipelines.silver.silver_nyc_tlc:main"
+bronze-noaa-weather = "v2.pipelines.bronze.bronze_noaa_weather:main"
+silver-noaa-weather = "v2.pipelines.silver.silver_noaa_weather:main"
+gold-daily-weather-demand = "v2.pipelines.gold.gold_daily_weather_demand:main"
 
 [tool.poetry]
 packages = [

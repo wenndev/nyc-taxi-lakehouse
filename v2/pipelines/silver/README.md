@@ -107,6 +107,35 @@ poetry run silver-nyc-tlc --start-date 2025-01-01 --end-date 2025-02-01 --limit 
 Esse comando processa apenas uma amostra de janeiro de 2025. Use ele primeiro para
 validar a regra da Silver sem forcar a maquina local a processar o ano inteiro.
 
+## NOAA Weather
+
+Entrada:
+
+```text
+v2/data/delta/bronze/noaa/ghcnd/2025
+```
+
+Saida:
+
+```text
+v2/data/delta/silver/noaa/ghcnd/2025
+```
+
+Ordem de tratamento:
+
+1. Explodir o array `results` vindo da API NOAA.
+2. Padronizar campos para `data_clima`, `id_estacao`, `tipo_dado` e `valor`.
+3. Remover registros sem campos obrigatorios.
+4. Gerar uma linha diaria por estacao.
+5. Criar colunas de chuva, temperatura, neve e flags para analise.
+
+Comando:
+
+```bash
+poetry run silver-noaa-weather --dry-run
+poetry run silver-noaa-weather
+```
+
 Teste ainda mais leve, criando uma Bronze de amostra antes:
 
 ```bash
