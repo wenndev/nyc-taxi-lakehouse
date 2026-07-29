@@ -20,8 +20,8 @@ v2/data/delta/silver/nyc_tlc/yellow/2025
 
 1. Renomear colunas para PT-BR.
 2. Filtrar colunas criticas nulas ou invalidas.
-3. Filtrar valores impossiveis.
-4. Tratar nulos numericos.
+3. Tratar nulos numericos nao criticos.
+4. Filtrar valores impossiveis.
 5. Tratar nulos categoricos.
 6. Criar colunas derivadas para analise temporal.
 7. Criar descricoes e flags semanticas.
@@ -34,8 +34,8 @@ Implementacao atual:
 Bronze Delta
   -> renomeacao de colunas
   -> filtro de colunas criticas
-  -> filtro de valores impossiveis
   -> tratamento de nulos numericos
+  -> filtro de valores impossiveis
   -> tratamento de nulos categoricos
   -> criacao de colunas derivadas
   -> criacao de descricoes e flags semanticas
@@ -73,6 +73,7 @@ categoria_duracao
 categoria_valor_total
 viagem_com_passageiro
 viagem_sem_passageiro
+valor_tarifa_zero
 qtd_passageiros_suspeita
 viagem_distancia_zero
 viagem_distancia_alta
@@ -81,6 +82,13 @@ viagem_duracao_alta
 viagem_valor_alto
 velocidade_media_alta
 registro_suspeito
+```
+
+Regra de nulos:
+
+```text
+Colunas criticas nulas removem o registro.
+Colunas numericas nao criticas nulas viram 0 e podem ser marcadas como suspeitas.
 ```
 
 Comando:

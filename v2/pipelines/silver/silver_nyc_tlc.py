@@ -48,6 +48,7 @@ COLUMN_RENAMES = {
 NUMERIC_COLUMNS_TO_FILL = [
     "qtd_passageiros",
     "distancia_milhas",
+    "valor_tarifa",
     "gorjeta",
     "valor_pedagios",
     "taxa_extra",
@@ -82,8 +83,8 @@ def run_silver_nyc_tlc(
     if limit_rows:
         df = df.limit(limit_rows)
     df = filter_critical_columns(df)
-    df = filter_invalid_values(df)
     df = fill_numeric_nulls(df)
+    df = filter_invalid_values(df)
     df = fill_categorical_nulls(df)
     df = add_derived_columns(df)
     df = add_semantic_columns(df)
@@ -205,6 +206,7 @@ def add_semantic_columns(df: DataFrame) -> DataFrame:
         .withColumn("categoria_valor_total", classify_total_amount(col("valor_total")))
         .withColumn("viagem_com_passageiro", col("qtd_passageiros") > 0)
         .withColumn("viagem_sem_passageiro", col("qtd_passageiros") == 0)
+        .withColumn("valor_tarifa_zero", col("valor_tarifa") == 0)
         .withColumn(
             "qtd_passageiros_suspeita",
             (col("qtd_passageiros") < 0) | (col("qtd_passageiros") > 6),
@@ -218,10 +220,12 @@ def add_semantic_columns(df: DataFrame) -> DataFrame:
         .withColumn(
             "registro_suspeito",
             col("qtd_passageiros_suspeita")
+            | col("viagem_sem_passageiro")
             | col("viagem_distancia_zero")
             | col("viagem_distancia_alta")
             | col("viagem_duracao_zero")
             | col("viagem_duracao_alta")
+            | col("valor_tarifa_zero")
             | col("viagem_valor_alto")
             | col("velocidade_media_alta"),
         )
@@ -351,8 +355,9 @@ def main() -> int:
     print(f"Output: {output_path}")
     print("Format: delta -> delta")
     print(
-        "Steps : rename columns, filter critical columns, filter invalid values, "
-        "fill nulls, add derived columns, add semantic columns, drop duplicates"
+        "Steps : rename columns, filter critical columns, fill nulls, "
+        "filter invalid values, add derived columns, add semantic columns, "
+        "drop duplicates"
     )
     if args.start_date or args.end_date:
         print(f"Date filter: {args.start_date or 'beginning'} -> {args.end_date or 'end'}")
