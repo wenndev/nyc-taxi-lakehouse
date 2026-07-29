@@ -24,8 +24,9 @@ v2/data/delta/silver/nyc_tlc/yellow/2025
 4. Tratar nulos numericos.
 5. Tratar nulos categoricos.
 6. Criar colunas derivadas para analise temporal.
-7. Remover duplicatas de negocio.
-8. Salvar Delta Silver.
+7. Criar descricoes e flags semanticas.
+8. Remover duplicatas de negocio.
+9. Salvar Delta Silver.
 
 Implementacao atual:
 
@@ -37,6 +38,7 @@ Bronze Delta
   -> tratamento de nulos numericos
   -> tratamento de nulos categoricos
   -> criacao de colunas derivadas
+  -> criacao de descricoes e flags semanticas
   -> remocao de duplicatas de negocio
   -> Silver Delta
 ```
@@ -59,6 +61,26 @@ duracao_minutos
 distancia_km
 valor_por_km
 velocidade_media_kmh
+```
+
+Colunas semanticas criadas:
+
+```text
+tipo_pagamento_desc
+tipo_tarifa_desc
+categoria_distancia
+categoria_duracao
+categoria_valor_total
+viagem_com_passageiro
+viagem_sem_passageiro
+qtd_passageiros_suspeita
+viagem_distancia_zero
+viagem_distancia_alta
+viagem_duracao_zero
+viagem_duracao_alta
+viagem_valor_alto
+velocidade_media_alta
+registro_suspeito
 ```
 
 Comando:

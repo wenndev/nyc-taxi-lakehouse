@@ -86,6 +86,7 @@ def run_silver_nyc_tlc(
     df = fill_numeric_nulls(df)
     df = fill_categorical_nulls(df)
     df = add_derived_columns(df)
+    df = add_semantic_columns(df)
     df = drop_business_duplicates(df)
 
     df.write.format("delta").mode(mode).option("overwriteSchema", "true").save(output_path)
@@ -195,6 +196,92 @@ def add_derived_columns(df: DataFrame) -> DataFrame:
     )
 
 
+def add_semantic_columns(df: DataFrame) -> DataFrame:
+    return (
+        df.withColumn("tipo_pagamento_desc", describe_payment_type(col("tipo_pagamento")))
+        .withColumn("tipo_tarifa_desc", describe_rate_code(col("id_tarifa")))
+        .withColumn("categoria_distancia", classify_distance(col("distancia_milhas")))
+        .withColumn("categoria_duracao", classify_duration(col("duracao_minutos")))
+        .withColumn("categoria_valor_total", classify_total_amount(col("valor_total")))
+        .withColumn("viagem_com_passageiro", col("qtd_passageiros") > 0)
+        .withColumn("viagem_sem_passageiro", col("qtd_passageiros") == 0)
+        .withColumn(
+            "qtd_passageiros_suspeita",
+            (col("qtd_passageiros") < 0) | (col("qtd_passageiros") > 6),
+        )
+        .withColumn("viagem_distancia_zero", col("distancia_milhas") == 0)
+        .withColumn("viagem_distancia_alta", col("distancia_milhas") > 100)
+        .withColumn("viagem_duracao_zero", col("duracao_minutos") <= 0)
+        .withColumn("viagem_duracao_alta", col("duracao_minutos") > 180)
+        .withColumn("viagem_valor_alto", col("valor_total") > 500)
+        .withColumn("velocidade_media_alta", col("velocidade_media_kmh") > 120)
+        .withColumn(
+            "registro_suspeito",
+            col("qtd_passageiros_suspeita")
+            | col("viagem_distancia_zero")
+            | col("viagem_distancia_alta")
+            | col("viagem_duracao_zero")
+            | col("viagem_duracao_alta")
+            | col("viagem_valor_alto")
+            | col("velocidade_media_alta"),
+        )
+    )
+
+
+def describe_payment_type(tipo_pagamento):
+    return (
+        when(tipo_pagamento == 1, "cartao_credito")
+        .when(tipo_pagamento == 2, "dinheiro")
+        .when(tipo_pagamento == 3, "sem_cobranca")
+        .when(tipo_pagamento == 4, "disputa")
+        .when(tipo_pagamento == 5, "desconhecido")
+        .when(tipo_pagamento == 6, "viagem_cancelada")
+        .otherwise("desconhecido")
+    )
+
+
+def describe_rate_code(id_tarifa):
+    return (
+        when(id_tarifa == 1, "tarifa_padrao")
+        .when(id_tarifa == 2, "jfk")
+        .when(id_tarifa == 3, "newark")
+        .when(id_tarifa == 4, "nassau_westchester")
+        .when(id_tarifa == 5, "tarifa_negociada")
+        .when(id_tarifa == 6, "viagem_compartilhada")
+        .when(id_tarifa == 99, "desconhecida")
+        .otherwise("desconhecida")
+    )
+
+
+def classify_distance(distancia_milhas):
+    return (
+        when(distancia_milhas == 0, "zero")
+        .when(distancia_milhas <= 1, "curta")
+        .when(distancia_milhas <= 5, "media")
+        .when(distancia_milhas <= 20, "longa")
+        .otherwise("muito_longa")
+    )
+
+
+def classify_duration(duracao_minutos):
+    return (
+        when(duracao_minutos <= 0, "zero")
+        .when(duracao_minutos <= 10, "curta")
+        .when(duracao_minutos <= 30, "media")
+        .when(duracao_minutos <= 60, "longa")
+        .otherwise("muito_longa")
+    )
+
+
+def classify_total_amount(valor_total):
+    return (
+        when(valor_total <= 10, "baixo")
+        .when(valor_total <= 50, "medio")
+        .when(valor_total <= 150, "alto")
+        .otherwise("muito_alto")
+    )
+
+
 def translate_month(mes):
     return (
         when(mes == 1, "janeiro")
@@ -265,7 +352,7 @@ def main() -> int:
     print("Format: delta -> delta")
     print(
         "Steps : rename columns, filter critical columns, filter invalid values, "
-        "fill nulls, add derived columns, drop duplicates"
+        "fill nulls, add derived columns, add semantic columns, drop duplicates"
     )
     if args.start_date or args.end_date:
         print(f"Date filter: {args.start_date or 'beginning'} -> {args.end_date or 'end'}")
