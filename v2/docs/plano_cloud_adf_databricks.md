@@ -89,10 +89,34 @@ O token nao deve ir para ADF em texto puro e nao deve ser commitado.
 
 ## Parametros Esperados no Job Databricks NOAA
 
+Notebook:
+
+```text
+v2/databricks/notebooks/ingest_noaa_weather.py
+```
+
+Parametros `baseParameters` no ADF:
+
 ```text
 year=2025
 stationid=GHCND:USW00094728
 output=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd/2025
+secret_scope=kv-lakehouse
+secret_key=noaa-token
+```
+
+Parametros opcionais:
+
+```text
+start_date=
+end_date=
+datasetid=GHCND
+datatypeids=PRCP,TMAX,TMIN,SNOW,SNWD
+units=metric
+limit=1000
+initial_offset=1
+overwrite=false
+dry_run=false
 ```
 
 ## Ordem Recomendada dos Jobs

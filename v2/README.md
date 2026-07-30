@@ -41,6 +41,9 @@ v2/
       silver_noaa_weather.py
     gold/
       gold_daily_weather_demand.py
+  databricks/
+    notebooks/
+      ingest_noaa_weather.py
 
   notebooks/
     01_inspect_bronze_nyc_tlc.ipynb
