@@ -27,6 +27,10 @@ Plano de retorno para Azure com ADF orquestrando Databricks:
 
 [v2/docs/plano_cloud_adf_databricks.md](v2/docs/plano_cloud_adf_databricks.md)
 
+Roteiro operacional para recriar a infraestrutura e executar a V2:
+
+[v2/docs/plano_execucao_azure_v2.md](v2/docs/plano_execucao_azure_v2.md)
+
 ## Fontes
 
 ### NYC TLC
@@ -180,6 +184,12 @@ Criar Gold diaria:
 poetry run gold-daily-weather-demand
 ```
 
+Criar Gold dimensional:
+
+```bash
+poetry run gold-star-schema
+```
+
 ## Teste Local Leve
 
 A Silver completa da TLC pode ser pesada localmente. Para validar sem travar a maquina:
@@ -199,6 +209,11 @@ poetry run silver-nyc-tlc \
 poetry run gold-daily-weather-demand \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
   --output v2/data/delta/dev/gold/daily_weather_demand/2025_01
+
+poetry run gold-star-schema \
+  --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
+  --output v2/data/delta/dev/gold/star_schema/2025_01 \
+  --skip-count
 ```
 
 ## Validacoes Atuais da V2
@@ -228,6 +243,15 @@ dias_sem_clima = 0
 dias_incompletos = 1
 ```
 
+Gold Star Schema dev:
+
+```text
+dim_data = 365
+dim_clima = 365
+fact_trips.clima_id_nulo = 0
+chaves_orfas = 0
+```
+
 ## Principais Melhorias da V2
 
 - Separacao clara entre V1 preservada e V2 refatorada.
@@ -239,6 +263,8 @@ dias_incompletos = 1
 - Silver TLC com colunas temporais, duracao, distancia em km, pagamento, flags e categorias.
 - Silver NOAA com clima diario em uma linha por data.
 - Gold diaria usando calendario completo de 2025 como base.
+- Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` e `fact_trips`.
+- Wrappers Databricks para Ingestion, Bronze, Silver e Gold.
 
 ## Problemas da V1 Que a V2 Resolve
 
@@ -249,17 +275,17 @@ Na V2:
 - a NOAA usa paginacao;
 - a cobertura climatica tem 365 dias;
 - a Gold diaria usa calendario completo;
+- a Gold dimensional liga `fact_trips` com `dim_clima` por data;
 - o join entre clima e demanda ocorre por `data`;
 - dias incompletos ficam marcados por flag.
 
 ## Proximos Passos
 
-- Criar notebook de inspecao para NOAA e Gold.
 - Criar dicionario de dados.
-- Planejar execucao completa da Silver TLC no Databricks.
-- Evoluir Gold dimensional da V2, se o objetivo for repetir o Star Schema da V1.
-- Criar dataset analitico para ML.
-- Planejar infraestrutura Azure: ADLS, Databricks, ADF/Workflows, Key Vault, Secret Scope e Unity Catalog.
+- Recriar infraestrutura Azure seguindo `v2/docs/plano_execucao_azure_v2.md`.
+- Executar Silver e Gold completas no Databricks.
+- Enriquecer `dim_localizacao` com taxi zone lookup.
+- Criar camada ML usando a Gold diaria.
 - Adicionar CI/CD com GitHub Actions para deploy de notebooks/scripts no Databricks.
 
 ## Observacoes Importantes

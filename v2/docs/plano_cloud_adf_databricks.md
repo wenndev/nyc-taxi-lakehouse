@@ -147,6 +147,7 @@ dry_run=false
 5. `silver-nyc-tlc`
 6. `silver-noaa-weather`
 7. `gold-daily-weather-demand`
+8. `gold-star-schema`
 
 ## O Que Ainda Falta Fazer Quando o Azure Voltar
 
@@ -157,3 +158,9 @@ dry_run=false
 - Criar cluster/job Databricks.
 - Fazer ADF chamar os jobs Databricks em sequencia.
 - Ajustar parametros de caminhos para apontar para a cloud.
+
+Roteiro operacional detalhado:
+
+```text
+v2/docs/plano_execucao_azure_v2.md
+```

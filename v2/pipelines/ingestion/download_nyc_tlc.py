@@ -67,7 +67,7 @@ def download_files(
 
         print(f"Downloading: {url}")
         try:
-            urlretrieve(url, destination)
+            download_file(url, destination)
         except (HTTPError, URLError) as exc:
             print(f"FAILED: {url}")
             print(exc)
@@ -77,6 +77,21 @@ def download_files(
 
     print(f"NYC TLC raw files ready at: {output_dir}")
     return 0
+
+
+def download_file(url: str, destination: Path) -> None:
+    temporary_destination = destination.with_suffix(f"{destination.suffix}.part")
+
+    if temporary_destination.exists():
+        temporary_destination.unlink()
+
+    try:
+        urlretrieve(url, temporary_destination)
+        temporary_destination.replace(destination)
+    except Exception:
+        if temporary_destination.exists():
+            temporary_destination.unlink()
+        raise
 
 
 def resolve_output_dir(output: str | None, default_output: Path) -> Path:

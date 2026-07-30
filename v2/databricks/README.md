@@ -37,6 +37,26 @@ v2/databricks/notebooks/gold_star_schema.py
 Os notebooks de Bronze, Silver e Gold reutilizam as funcoes PySpark em
 `v2/pipelines`. Eles nao devem concentrar regra de negocio.
 
+## Deploy No Databricks
+
+Os notebooks importam modulos como `v2.pipelines...`. Portanto, no Databricks o
+repositorio deve ser disponibilizado preservando a pasta `v2`.
+
+Opcoes:
+
+```text
+Databricks Repos apontando para este repositorio Git
+```
+
+ou:
+
+```text
+deploy do projeto como wheel/package no cluster
+```
+
+Para esta V2, o caminho mais simples e usar Databricks Repos durante a primeira
+execucao cloud.
+
 ### Ingest NYC TLC
 
 Responsabilidade:

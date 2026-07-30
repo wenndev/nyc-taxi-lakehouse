@@ -351,8 +351,8 @@ def main() -> int:
     parser.add_argument("--skip-count", action="store_true")
     args = parser.parse_args()
 
-    input_path = Path(args.input) if args.input else nyc_tlc_bronze_dir(args.year)
-    output_path = Path(args.output) if args.output else nyc_tlc_silver_dir(args.year)
+    input_path = args.input if args.input else str(nyc_tlc_bronze_dir(args.year))
+    output_path = args.output if args.output else str(nyc_tlc_silver_dir(args.year))
 
     print(f"Input : {input_path}")
     print(f"Output: {output_path}")
@@ -372,7 +372,7 @@ def main() -> int:
     if args.dry_run:
         return 0
 
-    if not (input_path / "_delta_log").exists():
+    if is_local_path(input_path) and not (Path(input_path) / "_delta_log").exists():
         print(f"Bronze Delta not found: {input_path}")
         print("Run first: poetry run bronze-nyc-tlc")
         return 1
@@ -382,8 +382,8 @@ def main() -> int:
     try:
         df_silver = run_silver_nyc_tlc(
             spark=spark,
-            input_path=str(input_path),
-            output_path=str(output_path),
+            input_path=input_path,
+            output_path=output_path,
             mode=args.mode,
             start_date=args.start_date,
             end_date=args.end_date,
@@ -399,6 +399,10 @@ def main() -> int:
         return 0
     finally:
         spark.stop()
+
+
+def is_local_path(path: str) -> bool:
+    return "://" not in path
 
 
 if __name__ == "__main__":

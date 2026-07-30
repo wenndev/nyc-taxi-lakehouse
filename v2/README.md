@@ -18,6 +18,12 @@ Plano cloud com ADF orquestrando Databricks:
 v2/docs/plano_cloud_adf_databricks.md
 ```
 
+Roteiro operacional para recriar Azure e executar a V2:
+
+```text
+v2/docs/plano_execucao_azure_v2.md
+```
+
 Importante: `v2/data/raw` e `v2/data/delta` nao sao versionados no Git. Para
 continuar em outra maquina, rebaixe os dados ou copie essas pastas manualmente.
 
@@ -46,6 +52,12 @@ v2/
     notebooks/
       ingest_nyc_tlc.py
       ingest_noaa_weather.py
+      bronze_nyc_tlc.py
+      bronze_noaa_weather.py
+      silver_nyc_tlc.py
+      silver_noaa_weather.py
+      gold_daily_weather_demand.py
+      gold_star_schema.py
 
   notebooks/
     01_inspect_bronze_nyc_tlc.ipynb
@@ -163,6 +175,11 @@ Teste local leve com amostra da TLC:
 poetry run gold-daily-weather-demand \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
   --output v2/data/delta/dev/gold/daily_weather_demand/2025_01
+
+poetry run gold-star-schema \
+  --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
+  --output v2/data/delta/dev/gold/star_schema/2025_01 \
+  --skip-count
 ```
 
 Resultado esperado para o ano completo:
@@ -171,6 +188,15 @@ Resultado esperado para o ano completo:
 365 linhas
 1 linha por dia
 join por data entre demanda diaria e clima diario
+```
+
+Resultado esperado para a Gold dimensional:
+
+```text
+dim_data com 365 dias
+dim_clima com 365 dias
+fact_trips sem clima_id nulo
+fact_trips sem chaves orfas
 ```
 
 ## Evolucoes da V1 ja enderecadas

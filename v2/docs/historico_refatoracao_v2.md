@@ -107,6 +107,7 @@ poetry run silver-nyc-tlc
 poetry run bronze-noaa-weather
 poetry run silver-noaa-weather
 poetry run gold-daily-weather-demand
+poetry run gold-star-schema
 ```
 
 ## NYC TLC 2025
@@ -401,6 +402,7 @@ poetry run bronze-nyc-tlc --skip-count
 poetry run bronze-noaa-weather --skip-count
 poetry run silver-noaa-weather
 poetry run gold-daily-weather-demand --dry-run
+poetry run gold-star-schema --dry-run
 ```
 
 Para testar sem processar tudo:
@@ -420,6 +422,11 @@ poetry run silver-nyc-tlc \
 poetry run gold-daily-weather-demand \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
   --output v2/data/delta/dev/gold/daily_weather_demand/2025_01
+
+poetry run gold-star-schema \
+  --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
+  --output v2/data/delta/dev/gold/star_schema/2025_01 \
+  --skip-count
 ```
 
 ## Ligacao Com Azure Depois
@@ -444,10 +451,12 @@ O que deve ser reaproveitado:
 
 ## Pendencias
 
-- Criar notebooks de inspecao para NOAA e Gold.
 - Criar dicionario de dados.
-- Planejar Star Schema V2 ou dataset analitico para ML.
+- Criar notebook de inspecao para NOAA.
 - Executar Silver TLC completa no Databricks.
+- Executar Gold completa no Databricks.
+- Enriquecer `dim_localizacao` com taxi zone lookup.
+- Planejar dataset analitico para ML.
 - Planejar pipelines incrementais.
 - Planejar particionamento Bronze.
 - Implementar infraestrutura Azure novamente.

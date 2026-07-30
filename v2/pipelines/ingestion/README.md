@@ -24,7 +24,7 @@ Conferir a request sem chamar a API:
 ```bash
 poetry run ingest-noaa-weather \
   --year 2025 \
-  --locationid CITY:US360019 \
+  --stationid GHCND:USW00094728 \
   --dry-run
 ```
 
@@ -33,7 +33,7 @@ Baixar usando paginacao:
 ```bash
 poetry run ingest-noaa-weather \
   --year 2025 \
-  --locationid CITY:US360019
+  --stationid GHCND:USW00094728
 ```
 
 Parametros importantes:
