@@ -21,7 +21,6 @@ from pyspark.sql.functions import (
 from v2.config.paths import nyc_tlc_bronze_dir, nyc_tlc_silver_dir
 from v2.config.spark import create_spark
 
-
 COLUMN_RENAMES = {
     "VendorID": "id_vendedor",
     "tpep_pickup_datetime": "data_hora_partida",
@@ -90,7 +89,9 @@ def run_silver_nyc_tlc(
     df = add_semantic_columns(df)
     df = drop_business_duplicates(df)
 
-    df.write.format("delta").mode(mode).option("overwriteSchema", "true").save(output_path)
+    df.write.format("delta").mode(mode).option("overwriteSchema", "true").save(
+        output_path
+    )
 
     return df
 
@@ -199,7 +200,9 @@ def add_derived_columns(df: DataFrame) -> DataFrame:
 
 def add_semantic_columns(df: DataFrame) -> DataFrame:
     return (
-        df.withColumn("tipo_pagamento_desc", describe_payment_type(col("tipo_pagamento")))
+        df.withColumn(
+            "tipo_pagamento_desc", describe_payment_type(col("tipo_pagamento"))
+        )
         .withColumn("tipo_tarifa_desc", describe_rate_code(col("id_tarifa")))
         .withColumn("categoria_distancia", classify_distance(col("distancia_milhas")))
         .withColumn("categoria_duracao", classify_duration(col("duracao_minutos")))
@@ -360,7 +363,9 @@ def main() -> int:
         "drop duplicates"
     )
     if args.start_date or args.end_date:
-        print(f"Date filter: {args.start_date or 'beginning'} -> {args.end_date or 'end'}")
+        print(
+            f"Date filter: {args.start_date or 'beginning'} -> {args.end_date or 'end'}"
+        )
     if args.limit:
         print(f"Limit : {args.limit} rows")
 
