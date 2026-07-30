@@ -35,3 +35,7 @@ def noaa_silver_dir(year: int = 2025, datasetid: str = "GHCND") -> Path:
 
 def daily_weather_demand_gold_dir(year: int = 2025) -> Path:
     return GOLD_ROOT / "daily_weather_demand" / str(year)
+
+
+def star_schema_gold_dir(year: int = 2025) -> Path:
+    return GOLD_ROOT / "star_schema" / str(year)

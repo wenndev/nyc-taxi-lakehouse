@@ -11,6 +11,7 @@ def create_spark(app_name: str) -> SparkSession:
         .config("spark.driver.maxResultSize", "512m")
         .config("spark.sql.shuffle.partitions", "16")
         .config("spark.sql.files.maxPartitionBytes", "32m")
+        .config("spark.databricks.delta.snapshotPartitions", "4")
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
         .config("spark.sql.session.timeZone", "UTC")

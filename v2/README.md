@@ -41,6 +41,7 @@ v2/
       silver_noaa_weather.py
     gold/
       gold_daily_weather_demand.py
+      gold_star_schema.py
   databricks/
     notebooks/
       ingest_nyc_tlc.py
@@ -49,6 +50,7 @@ v2/
   notebooks/
     01_inspect_bronze_nyc_tlc.ipynb
     02_inspect_silver_nyc_tlc.ipynb
+    03_inspect_gold_star_schema.ipynb
 
   data/
     raw/
@@ -148,6 +150,13 @@ poetry run gold-daily-weather-demand --dry-run
 poetry run gold-daily-weather-demand
 ```
 
+Criar Gold dimensional:
+
+```bash
+poetry run gold-star-schema --dry-run
+poetry run gold-star-schema
+```
+
 Teste local leve com amostra da TLC:
 
 ```bash
@@ -170,6 +179,7 @@ join por data entre demanda diaria e clima diario
 - Clima 2025 com 365 dias para Central Park.
 - Silver TLC com colunas temporais, duracao, passageiros, pagamento e flags.
 - Gold diaria usando calendario completo para evitar perda de dias no join.
+- Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` e `fact_trips`.
 
 ## Visualizacao com Jupyter
 
@@ -183,4 +193,12 @@ Notebook inicial:
 
 ```text
 v2/notebooks/01_inspect_bronze_nyc_tlc.ipynb
+```
+
+Notebooks de inspecao:
+
+```text
+v2/notebooks/01_inspect_bronze_nyc_tlc.ipynb
+v2/notebooks/02_inspect_silver_nyc_tlc.ipynb
+v2/notebooks/03_inspect_gold_star_schema.ipynb
 ```
