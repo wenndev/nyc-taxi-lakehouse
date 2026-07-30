@@ -12,6 +12,7 @@ import json
 import os
 import sys
 from pathlib import Path
+from typing import Any
 
 
 def add_repo_root_to_path() -> None:
@@ -24,6 +25,20 @@ def add_repo_root_to_path() -> None:
 
 
 add_repo_root_to_path()
+
+# COMMAND ----------
+
+
+def get_dbutils() -> Any:
+    resolved_dbutils = globals().get("dbutils")
+
+    if resolved_dbutils is None:
+        raise RuntimeError("This notebook must run on Databricks with dbutils.")
+
+    return resolved_dbutils
+
+
+dbutils = get_dbutils()
 
 # COMMAND ----------
 

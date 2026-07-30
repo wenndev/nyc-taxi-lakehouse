@@ -27,6 +27,25 @@ Daria para fazer, mas ficaria mais trabalhoso:
 Como a paginacao ja esta funcionando no script Python, e melhor deixar o ADF
 apenas chamar o job Databricks.
 
+## Job Databricks NYC TLC
+
+Notebook:
+
+```text
+v2/databricks/notebooks/ingest_nyc_tlc.py
+```
+
+Parametros `baseParameters` no ADF:
+
+```text
+year=2025
+start_month=1
+end_month=12
+output=/Volumes/<catalog>/<schema>/<volume>/raw/nyc_tlc/yellow/2025
+overwrite=false
+dry_run=false
+```
+
 ## Onde Fica a Paginacao
 
 No script:

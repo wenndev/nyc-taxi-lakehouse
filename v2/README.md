@@ -43,6 +43,7 @@ v2/
       gold_daily_weather_demand.py
   databricks/
     notebooks/
+      ingest_nyc_tlc.py
       ingest_noaa_weather.py
 
   notebooks/

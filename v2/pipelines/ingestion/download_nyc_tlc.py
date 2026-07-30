@@ -22,18 +22,46 @@ def main() -> int:
     validate_month_range(args.start_month, args.end_month)
 
     output_dir = resolve_output_dir(args.output, nyc_tlc_raw_dir(args.year))
+
+    return download_files(
+        year=args.year,
+        start_month=args.start_month,
+        end_month=args.end_month,
+        output_dir=output_dir,
+        overwrite=args.overwrite,
+        dry_run=args.dry_run,
+    )
+
+
+def validate_month_range(start_month: int, end_month: int) -> None:
+    if not 1 <= start_month <= 12:
+        raise ValueError(f"Mes inicial invalido: {start_month}")
+    if not 1 <= end_month <= 12:
+        raise ValueError(f"Mes final invalido: {end_month}")
+    if start_month > end_month:
+        raise ValueError("Mes inicial nao pode ser maior que mes final")
+
+
+def download_files(
+    year: int,
+    start_month: int,
+    end_month: int,
+    output_dir: Path,
+    overwrite: bool = False,
+    dry_run: bool = False,
+) -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
 
-    for month in range(args.start_month, args.end_month + 1):
-        url = nyc_tlc_yellow_url(args.year, month)
-        filename = nyc_tlc_yellow_filename(args.year, month)
+    for month in range(start_month, end_month + 1):
+        url = nyc_tlc_yellow_url(year, month)
+        filename = nyc_tlc_yellow_filename(year, month)
         destination = output_dir / filename
 
-        if args.dry_run:
+        if dry_run:
             print(f"{url} -> {destination}")
             continue
 
-        if destination.exists() and not args.overwrite:
+        if destination.exists() and not overwrite:
             print(f"SKIP existing: {destination}")
             continue
 
@@ -49,15 +77,6 @@ def main() -> int:
 
     print(f"NYC TLC raw files ready at: {output_dir}")
     return 0
-
-
-def validate_month_range(start_month: int, end_month: int) -> None:
-    if not 1 <= start_month <= 12:
-        raise ValueError(f"Mes inicial invalido: {start_month}")
-    if not 1 <= end_month <= 12:
-        raise ValueError(f"Mes final invalido: {end_month}")
-    if start_month > end_month:
-        raise ValueError("Mes inicial nao pode ser maior que mes final")
 
 
 def resolve_output_dir(output: str | None, default_output: Path) -> Path:
