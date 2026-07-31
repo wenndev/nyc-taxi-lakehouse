@@ -14,7 +14,7 @@ Entrada:
 
 ```text
 v2/data/delta/silver/nyc_tlc/yellow/2025
-v2/data/delta/silver/noaa/ghcnd/2025
+v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
 Saida:
@@ -41,7 +41,7 @@ poetry run gold-daily-weather-demand \
 Responsabilidade desta etapa:
 
 - garantir 365 linhas para 2025;
-- evitar `clima_id` nulo causado por falta de cobertura da NOAA;
+- consolidar a NOAA para uma linha de clima NYC por data;
 - deixar uma base simples para responder se clima afeta demanda por taxi.
 
 ## Star Schema
@@ -61,7 +61,7 @@ Entrada:
 
 ```text
 v2/data/delta/silver/nyc_tlc/yellow/2025
-v2/data/delta/silver/noaa/ghcnd/2025
+v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
 Saida:
@@ -106,3 +106,7 @@ localizacao_id = ID oficial de zona da NYC TLC
 
 Essa escolha evita criar IDs com janela global no Spark e deixa as tabelas mais
 estaveis para execucao local e Databricks.
+
+Regra importante: a `fact_trips` nao junta diretamente com varias estacoes NOAA.
+A `dim_clima` e criada depois da consolidacao diaria, mantendo 1 `clima_id` por
+data e evitando duplicacao de corridas.

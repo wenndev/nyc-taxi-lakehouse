@@ -45,11 +45,17 @@ dbutils = get_dbutils()
 from v2.pipelines.ingestion.download_noaa_weather import (  # noqa: E402
     DEFAULT_DATATYPES,
     build_base_params,
+    default_to_nyc_location,
     build_url,
     download_pages,
     resolve_date_range,
     resolve_output_dir,
+    resolve_storage_datasetid,
     validate_args,
+)
+from v2.config.sources import (  # noqa: E402
+    NOAA_GHCND_NYC_STORAGE_ID,
+    NOAA_NYC_LOCATION_ID,
 )
 
 # COMMAND ----------
@@ -59,12 +65,13 @@ dbutils.widgets.text("start_date", "")
 dbutils.widgets.text("end_date", "")
 dbutils.widgets.text("datasetid", "GHCND")
 dbutils.widgets.text("datatypeids", ",".join(DEFAULT_DATATYPES))
-dbutils.widgets.text("stationid", "GHCND:USW00094728")
-dbutils.widgets.text("locationid", "")
+dbutils.widgets.text("stationid", "")
+dbutils.widgets.text("locationid", NOAA_NYC_LOCATION_ID)
 dbutils.widgets.text("units", "metric")
 dbutils.widgets.text("limit", "1000")
 dbutils.widgets.text("initial_offset", "1")
 dbutils.widgets.text("output", "")
+dbutils.widgets.text("storage_datasetid", NOAA_GHCND_NYC_STORAGE_ID)
 dbutils.widgets.text("secret_scope", "")
 dbutils.widgets.text("secret_key", "noaa-token")
 dbutils.widgets.text("overwrite", "false")
@@ -121,12 +128,19 @@ args.initial_offset = int(widget("initial_offset"))
 args.stationid = csv_widget("stationid")
 args.locationid = csv_widget("locationid")
 args.allow_global = False
+default_to_nyc_location(args)
 
 year = int(widget("year"))
 datasetid = widget("datasetid")
 datatypes = csv_widget("datatypeids") or DEFAULT_DATATYPES
 units = widget("units")
 output = optional_widget("output")
+storage_datasetid = resolve_storage_datasetid(
+    api_datasetid=datasetid,
+    stationids=args.stationid,
+    locationids=args.locationid,
+    storage_datasetid=optional_widget("storage_datasetid"),
+)
 overwrite = bool_widget("overwrite")
 dry_run = bool_widget("dry_run")
 sleep_seconds = float(widget("sleep_seconds"))
@@ -137,7 +151,10 @@ secret_key = optional_widget("secret_key")
 start_date, end_date = resolve_date_range(year, args.start_date, args.end_date)
 validate_args(args, datatypes)
 
-output_dir = resolve_output_dir(output, Path(f"/tmp/noaa/{datasetid.lower()}/{year}"))
+output_dir = resolve_output_dir(
+    output,
+    Path(f"/tmp/noaa/{storage_datasetid.lower()}/{year}"),
+)
 base_params = build_base_params(
     datasetid=datasetid,
     datatypes=datatypes,
@@ -152,6 +169,7 @@ first_page_url = build_url(base_params, limit=args.limit, offset=args.initial_of
 
 print(f"Output : {output_dir}")
 print(f"Dataset: {datasetid}")
+print(f"Storage: {storage_datasetid}")
 print(f"Dates  : {start_date} -> {end_date}")
 print(f"Types  : {', '.join(datatypes)}")
 print(f"First page: {first_page_url}")
@@ -162,6 +180,7 @@ if dry_run:
             {
                 "status": "dry_run",
                 "output": str(output_dir),
+                "storage_datasetid": storage_datasetid,
                 "first_page": first_page_url,
             }
         )
@@ -178,6 +197,7 @@ exit_code = download_pages(
     output_dir=output_dir,
     limit=args.limit,
     initial_offset=args.initial_offset,
+    storage_datasetid=storage_datasetid,
     overwrite=overwrite,
     sleep_seconds=sleep_seconds,
     max_retries=max_retries,
@@ -193,7 +213,9 @@ dbutils.notebook.exit(
             "output": str(output_dir),
             "year": year,
             "datasetid": datasetid,
+            "storage_datasetid": storage_datasetid,
             "stationid": args.stationid,
+            "locationid": args.locationid,
         }
     )
 )

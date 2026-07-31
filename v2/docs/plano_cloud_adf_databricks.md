@@ -65,13 +65,15 @@ offset=2001
 ate downloaded_results == expected_count
 ```
 
-Teste local ja validado:
+Validacao esperada:
 
 ```text
-expected=1824
-pagina 1 offset=1    -> 1000 registros
-pagina 2 offset=1001 -> 824 registros
-total=1824
+downloaded_results == expected_count
+pagina 1 offset=1
+pagina 2 offset=1001
+pagina 3 offset=2001
+...
+ate a ultima pagina retornada pela API
 ```
 
 ## Caminhos no Databricks
@@ -81,8 +83,8 @@ filesystem. Por isso, para raw ingestion no Databricks, use um caminho de arquiv
 montado ou volume:
 
 ```text
-/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd/2025
-/dbfs/mnt/raw/noaa/ghcnd/2025
+/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
+/dbfs/mnt/raw/noaa/ghcnd_nyc/2025
 ```
 
 Evite passar `abfss://...` diretamente para os scripts de ingestion Python.
@@ -118,10 +120,11 @@ Parametros `baseParameters` no ADF:
 
 ```text
 year=2025
-stationid=GHCND:USW00094728
-output=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd/2025
+locationid=CITY:US360019
+output=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
 secret_scope=kv-lakehouse
 secret_key=noaa-token
+storage_datasetid=GHCND_NYC
 ```
 
 Parametros opcionais:

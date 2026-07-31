@@ -6,10 +6,8 @@ Nesta versao, o projeto saiu do recorte de 2024 da V1 e passou a trabalhar com
 dados de 2025. A logica principal continua sendo Bronze, Silver e Gold, mas agora
 com codigo PySpark reaproveitavel localmente e depois no Azure Databricks.
 
-A V2 validou a abordagem com a estacao Central Park como referencia climatica.
-A evolucao V2.5 melhora essa ideia: buscar varias estacoes NOAA de NYC com
-paginacao, consolidar o clima por dia e manter a `dim_clima` com 1 linha por
-data.
+A V2.5 e o fluxo atual: buscar varias estacoes NOAA de NYC com paginacao,
+consolidar o clima por dia e manter a `dim_clima` com 1 linha por data.
 
 Historico tecnico da refatoracao:
 
@@ -88,7 +86,7 @@ v2/
         yellow/
           2025/
       noaa/
-        ghcnd/
+        ghcnd_nyc/
           2025/
     delta/
       bronze/
@@ -118,16 +116,20 @@ Baixar somente janeiro para testar:
 poetry run ingest-nyc-tlc --start-month 1 --end-month 1
 ```
 
-Baixar clima da NOAA para 2025, usando a estacao Central Park:
+Baixar clima da NOAA para 2025 usando varias estacoes de NYC. A regra de
+modelagem e manter a Gold com 1 linha de clima por data:
 
 ```bash
 poetry run ingest-noaa-weather \
   --year 2025 \
-  --stationid GHCND:USW00094728
+  --locationid CITY:US360019
 ```
 
-Na V2.5, a ingestao NOAA evolui para varias estacoes de NYC. A regra de
-modelagem continua sendo manter a Gold com 1 linha de clima por data:
+Esse comando usa `datasetid=GHCND` na API, mas salva por padrao em:
+
+```text
+v2/data/raw/noaa/ghcnd_nyc/2025
+```
 
 ```text
 NOAA varias estacoes
@@ -187,14 +189,16 @@ base. Ela junta demanda diaria da TLC com clima diario da NOAA.
 
 ```bash
 poetry run gold-daily-weather-demand --dry-run
-poetry run gold-daily-weather-demand
+poetry run gold-daily-weather-demand \
+  --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
 Criar Gold dimensional:
 
 ```bash
 poetry run gold-star-schema --dry-run
-poetry run gold-star-schema
+poetry run gold-star-schema \
+  --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
 Teste local leve com amostra da TLC:
@@ -230,7 +234,6 @@ fact_trips sem chaves orfas
 ## Evolucoes da V1 ja enderecadas
 
 - Paginacao da API NOAA com `offset`.
-- Clima 2025 com 365 dias para Central Park.
 - Desenho V2.5 para clima NYC consolidado usando varias estacoes NOAA.
 - Silver TLC com colunas temporais, duracao, passageiros, pagamento e flags.
 - Gold diaria usando calendario completo para evitar perda de dias no join.

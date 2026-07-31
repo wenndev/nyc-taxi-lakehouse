@@ -19,21 +19,21 @@ Antes de rodar, configure o token:
 export NOAA_TOKEN="seu_token"
 ```
 
-Conferir a request sem chamar a API:
+Conferir a request V2.5 com varias estacoes de NYC:
 
 ```bash
 poetry run ingest-noaa-weather \
   --year 2025 \
-  --stationid GHCND:USW00094728 \
+  --locationid CITY:US360019 \
   --dry-run
 ```
 
-Baixar usando paginacao:
+Baixar V2.5 usando paginacao:
 
 ```bash
 poetry run ingest-noaa-weather \
   --year 2025 \
-  --stationid GHCND:USW00094728
+  --locationid CITY:US360019
 ```
 
 Parametros importantes:
@@ -45,13 +45,15 @@ Parametros importantes:
 --locationid    pode repetir
 --limit         maximo 1000 na API CDO
 --output        destino raw local
+--storage-datasetid nome usado apenas para organizar a pasta local/cloud
 ```
 
-Saida padrao:
+Saida padrao V2.5 com `locationid CITY:US360019`:
 
 ```text
-v2/data/raw/noaa/ghcnd/2025/
+v2/data/raw/noaa/ghcnd_nyc/2025/
   page_000001_offset_000000001.json
   page_000002_offset_000001001.json
+  ...
   _manifest.json
 ```

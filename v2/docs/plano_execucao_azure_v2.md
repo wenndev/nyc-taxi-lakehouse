@@ -30,7 +30,9 @@ As condicoes climaticas afetam a demanda por taxi em Nova York?
 - Ano de referencia: `2025`.
 - Taxi: NYC TLC Yellow Taxi.
 - Clima: NOAA GHCND.
-- Estacao climatica: Central Park, `GHCND:USW00094728`.
+- Escopo climatico: varias estacoes NOAA de NYC via `locationid=CITY:US360019`.
+- Regra de modelagem: consolidar a NOAA para 1 linha por data antes de ligar com
+  corridas.
 - Camadas: Raw, Bronze, Silver e Gold.
 - Formato das camadas tratadas: Delta Lake.
 - Orquestracao cloud: Azure Data Factory chamando notebooks Databricks.
@@ -77,11 +79,11 @@ Opcao recomendada para os downloaders Python no Databricks:
 
 ```text
 /Volumes/<catalog>/<schema>/<volume>/raw/nyc_tlc/yellow/2025
-/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd/2025
+/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/bronze/nyc_tlc/yellow/2025
-/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd/2025
+/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd_nyc/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
-/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd/2025
+/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/gold/star_schema/2025
 ```
@@ -185,11 +187,12 @@ dry_run=false
 
 ```text
 year=2025
-stationid=GHCND:USW00094728
-output=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd/2025
+locationid=CITY:US360019
+output=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
 secret_scope=kv-lakehouse
 secret_key=noaa-token
 datasetid=GHCND
+storage_datasetid=GHCND_NYC
 datatypeids=PRCP,TMAX,TMIN,SNOW,SNWD
 units=metric
 limit=1000
@@ -213,9 +216,9 @@ dry_run=false
 
 ```text
 year=2025
-datasetid=GHCND
-input=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd/2025
-output=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd/2025
+datasetid=GHCND_NYC
+input=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
+output=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd_nyc/2025
 mode=overwrite
 skip_count=true
 dry_run=false
@@ -238,9 +241,9 @@ dry_run=false
 
 ```text
 year=2025
-datasetid=GHCND
-input=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd/2025
-output=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd/2025
+datasetid=GHCND_NYC
+input=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd_nyc/2025
+output=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 mode=overwrite
 skip_count=false
 dry_run=false
@@ -251,7 +254,7 @@ dry_run=false
 ```text
 year=2025
 tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
-noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd/2025
+noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
 mode=overwrite
 skip_count=false
@@ -263,7 +266,7 @@ dry_run=false
 ```text
 year=2025
 tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
-noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd/2025
+noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/star_schema/2025
 mode=overwrite
 skip_count=true
@@ -284,9 +287,9 @@ data_max == 2025-12-31
 Validar Silver NOAA:
 
 ```text
-linhas == 365
 dias_distintos == 365
-dias_clima_incompleto esperado: 1
+linhas > 365 quando houver varias estacoes
+qtd_estacoes > 1
 ```
 
 Validar Gold diaria:
@@ -301,6 +304,7 @@ Validar Gold Star Schema:
 ```text
 dim_data.data_id sem duplicidade
 dim_clima.clima_id sem duplicidade
+dim_clima com 365 dias
 fact_trips.data_id_nulo == 0
 fact_trips.clima_id_nulo == 0
 fact_trips.localizacao_partida_id_nulo == 0

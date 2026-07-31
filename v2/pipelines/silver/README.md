@@ -112,13 +112,13 @@ validar a regra da Silver sem forcar a maquina local a processar o ano inteiro.
 Entrada:
 
 ```text
-v2/data/delta/bronze/noaa/ghcnd/2025
+v2/data/delta/bronze/noaa/ghcnd_nyc/2025
 ```
 
 Saida:
 
 ```text
-v2/data/delta/silver/noaa/ghcnd/2025
+v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
 Ordem de tratamento:

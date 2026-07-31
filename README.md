@@ -50,18 +50,7 @@ https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-12.parquet
 
 Dados climaticos da API CDO da NOAA.
 
-Na primeira etapa da V2, a estrategia usou uma unica estacao meteorologica como
-referencia:
-
-```text
-Central Park
-stationid: GHCND:USW00094728
-dataset: GHCND
-variaveis: PRCP, TMAX, TMIN, SNOW, SNWD
-```
-
-Essa escolha reduziu complexidade e validou a paginacao. A evolucao V2.5 volta
-para uma ideia mais madura da V1:
+Na V2.5, a estrategia atual usa varias estacoes NOAA dentro do recorte de NYC:
 
 ```text
 NOAA varias estacoes de NYC
@@ -178,12 +167,18 @@ NOAA_TOKEN=seu_token_aqui
 
 O arquivo `.env` esta no `.gitignore` e nao deve ser commitado.
 
-Baixar NOAA 2025 com paginacao:
+Baixar NOAA 2025 com paginacao para a V2.5, usando varias estacoes de NYC:
 
 ```bash
 poetry run ingest-noaa-weather \
   --year 2025 \
-  --stationid GHCND:USW00094728
+  --locationid CITY:US360019
+```
+
+Com `locationid CITY:US360019`, a saida padrao fica separada em:
+
+```text
+v2/data/raw/noaa/ghcnd_nyc/2025
 ```
 
 Criar Bronze:
@@ -203,13 +198,15 @@ poetry run silver-noaa-weather
 Criar Gold diaria:
 
 ```bash
-poetry run gold-daily-weather-demand
+poetry run gold-daily-weather-demand \
+  --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
 Criar Gold dimensional:
 
 ```bash
-poetry run gold-star-schema
+poetry run gold-star-schema \
+  --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
 ## Teste Local Leve
@@ -249,20 +246,18 @@ dias_2025 = 365
 NOAA 2025:
 
 ```text
-registros baixados = 1824
-registros esperados pela API = 1824
+Fluxo V2.5 atual: usar locationid CITY:US360019.
+Validar apos a ingestao:
+downloaded_results == expected_count
 dias distintos = 365
 periodo = 2025-01-01 ate 2025-12-31
 ```
-
-Observacao: a NOAA nao retornou `SNWD` para 2025-09-17. A Silver marca isso como `registro_clima_incompleto`.
 
 Gold diaria dev:
 
 ```text
 linhas = 365
 dias_sem_clima = 0
-dias_incompletos = 1
 ```
 
 Gold Star Schema dev:
@@ -280,11 +275,11 @@ chaves_orfas = 0
 - Projeto local-first com Poetry.
 - Ingestao NYC TLC 2025 automatizada.
 - Ingestao NOAA com paginacao por `offset`.
-- Validacao inicial com Central Park como referencia climatica.
-- Planejamento V2.5 para consolidar clima diario de NYC usando varias estacoes NOAA.
+- Fluxo V2.5 para varias estacoes NOAA de NYC.
 - Bronze e Silver em Delta Lake para TLC e NOAA.
 - Silver TLC com colunas temporais, duracao, distancia em km, pagamento, flags e categorias.
-- Silver NOAA com clima diario em uma linha por data.
+- Silver NOAA com clima diario em uma linha por estacao/data.
+- Gold consolida a NOAA para uma linha de clima NYC por data.
 - Gold diaria usando calendario completo de 2025 como base.
 - Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` e `fact_trips`.
 - Wrappers Databricks para Ingestion, Bronze, Silver e Gold.
@@ -306,7 +301,8 @@ Na V2:
 ## Proximos Passos
 
 - Criar dicionario de dados.
-- Implementar clima NYC consolidado a partir de varias estacoes NOAA.
+- Rodar a ingestao NOAA V2.5 completa com `CITY:US360019`.
+- Validar Bronze, Silver e Gold com varias estacoes NOAA.
 - Recriar infraestrutura Azure seguindo `v2/docs/plano_execucao_azure_v2.md`.
 - Executar Silver e Gold completas no Databricks.
 - Enriquecer `dim_localizacao` com taxi zone lookup.

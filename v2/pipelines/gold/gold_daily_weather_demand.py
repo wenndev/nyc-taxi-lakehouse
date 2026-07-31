@@ -12,6 +12,7 @@ from v2.config.paths import (
     nyc_tlc_silver_dir,
 )
 from v2.config.spark import create_spark
+from v2.pipelines.gold.weather_consolidation import build_consolidated_daily_weather
 
 
 def run_gold_daily_weather_demand(
@@ -24,14 +25,17 @@ def run_gold_daily_weather_demand(
 ) -> DataFrame:
     calendar = build_calendar(spark, year)
     demand = build_daily_taxi_demand(spark.read.format("delta").load(tlc_input_path), year)
-    weather = build_daily_weather(spark.read.format("delta").load(noaa_input_path))
+    weather = build_consolidated_daily_weather(
+        spark.read.format("delta").load(noaa_input_path),
+        year=year,
+    )
 
     df = (
         calendar.join(demand, on="data", how="left")
         .join(weather.withColumnRenamed("data_clima", "data"), on="data", how="left")
         .transform(fill_demand_nulls)
         .withColumn("sem_corridas", F.col("qtd_corridas") == 0)
-        .withColumn("sem_clima", F.col("id_estacao").isNull())
+        .withColumn("sem_clima", F.col("escopo_clima").isNull())
         .withColumn(
             "registro_alinhamento_incompleto",
             F.col("sem_clima")
@@ -84,12 +88,6 @@ def build_daily_taxi_demand(df: DataFrame, year: int) -> DataFrame:
             F.sum(F.col("registro_suspeito").cast("int")).alias("qtd_registros_suspeitos"),
         )
     )
-
-
-def build_daily_weather(df: DataFrame) -> DataFrame:
-    calendar_columns = {"ano", "mes", "dia_mes", "dia_semana_num", "fim_de_semana"}
-    selected_columns = [column for column in df.columns if column not in calendar_columns]
-    return df.select(*selected_columns)
 
 
 def fill_demand_nulls(df: DataFrame) -> DataFrame:

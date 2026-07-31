@@ -9,6 +9,7 @@ from pyspark.sql import functions as F
 
 from v2.config.paths import noaa_silver_dir, nyc_tlc_silver_dir, star_schema_gold_dir
 from v2.config.spark import create_spark
+from v2.pipelines.gold.weather_consolidation import build_consolidated_daily_weather
 
 
 @dataclass
@@ -89,20 +90,29 @@ def build_dim_data(spark: SparkSession, year: int) -> DataFrame:
 
 def build_dim_clima(df_noaa: DataFrame, year: int) -> DataFrame:
     return (
-        df_noaa.withColumnRenamed("data_clima", "data")
-        .filter(F.year("data") == year)
+        build_consolidated_daily_weather(df_noaa, year=year)
+        .withColumnRenamed("data_clima", "data")
         .withColumn("clima_id", F.date_format("data", "yyyyMMdd").cast("int"))
         .select(
             "clima_id",
             "data",
-            "id_estacao",
-            "precipitacao_mm",
-            "temp_max_c",
-            "temp_min_c",
+            "fonte_clima",
+            "escopo_clima",
+            "qtd_estacoes",
+            "qtd_estacoes_completas",
+            "cobertura_estacoes_pct",
+            "qtd_estacoes_com_precipitacao",
+            "qtd_estacoes_com_temperatura",
+            "precipitacao_media_mm",
+            "precipitacao_max_mm",
+            "temp_max_media_c",
+            "temp_min_media_c",
             "temp_media_c",
             "amplitude_termica_c",
-            "neve_mm",
-            "neve_acumulada_mm",
+            "neve_media_mm",
+            "neve_max_mm",
+            "neve_acumulada_media_mm",
+            "neve_acumulada_max_mm",
             "teve_chuva",
             "teve_neve",
             "categoria_chuva",

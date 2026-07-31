@@ -80,7 +80,7 @@ dry_run
 
 Responsabilidade:
 
-- receber ano, estacao e caminho raw;
+- receber ano, escopo NOAA e caminho raw;
 - buscar token NOAA via `dbutils.secrets`;
 - executar a ingestao NOAA com paginacao por `offset`;
 - salvar paginas JSON no raw da cloud.
@@ -90,9 +90,22 @@ Parametros principais no ADF:
 ```text
 year
 stationid
+locationid
 output
+storage_datasetid
 secret_scope
 secret_key
+```
+
+Exemplo V2.5:
+
+```text
+year=2025
+locationid=CITY:US360019
+output=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
+storage_datasetid=GHCND_NYC
+secret_scope=kv-lakehouse
+secret_key=noaa-token
 ```
 
 ### Bronze NYC TLC
@@ -133,8 +146,8 @@ dry_run
 Exemplo:
 
 ```text
-input=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd/2025
-output=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd/2025
+input=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
+output=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd_nyc/2025
 ```
 
 ### Silver NYC TLC
@@ -177,8 +190,8 @@ dry_run
 Exemplo:
 
 ```text
-input=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd/2025
-output=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd/2025
+input=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd_nyc/2025
+output=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
 ### Gold Daily Weather Demand
@@ -199,7 +212,7 @@ Exemplo:
 
 ```text
 tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
-noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd/2025
+noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
 ```
 
@@ -221,7 +234,7 @@ Exemplo:
 
 ```text
 tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
-noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd/2025
+noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/star_schema/2025
 ```
 
@@ -239,13 +252,13 @@ output=/Volumes/<catalog>/<schema>/<volume>/raw/nyc_tlc/yellow/2025
 Exemplo NOAA:
 
 ```text
-/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd/2025
+/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
 ```
 
 Tambem pode ser usado:
 
 ```text
-dbfs:/mnt/raw/noaa/ghcnd/2025
+dbfs:/mnt/raw/noaa/ghcnd_nyc/2025
 ```
 
 O script converte `dbfs:/...` para `/dbfs/...` automaticamente.

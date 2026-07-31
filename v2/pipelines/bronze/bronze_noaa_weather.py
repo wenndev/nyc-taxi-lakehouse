@@ -8,6 +8,7 @@ from pyspark.sql.functions import current_timestamp, input_file_name
 
 from v2.config.paths import noaa_bronze_dir, noaa_raw_dir
 from v2.config.spark import create_spark
+from v2.config.sources import NOAA_GHCND_NYC_STORAGE_ID
 
 
 def run_bronze_noaa_weather(
@@ -39,7 +40,7 @@ def is_local_path(path: str) -> bool:
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create NOAA Weather Bronze Delta table")
     parser.add_argument("--year", type=int, default=2025)
-    parser.add_argument("--datasetid", default="GHCND")
+    parser.add_argument("--datasetid", default=NOAA_GHCND_NYC_STORAGE_ID)
     parser.add_argument("--input", default=None)
     parser.add_argument("--output", default=None)
     parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])

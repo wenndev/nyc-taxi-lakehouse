@@ -47,13 +47,13 @@ O tratamento de nulos, filtros, deduplicacao e renomeacao ficam para a Silver.
 Entrada:
 
 ```text
-v2/data/raw/noaa/ghcnd/2025/page_*.json
+v2/data/raw/noaa/ghcnd_nyc/2025/page_*.json
 ```
 
 Saida:
 
 ```text
-v2/data/delta/bronze/noaa/ghcnd/2025
+v2/data/delta/bronze/noaa/ghcnd_nyc/2025
 ```
 
 Conferir caminhos sem executar Spark:

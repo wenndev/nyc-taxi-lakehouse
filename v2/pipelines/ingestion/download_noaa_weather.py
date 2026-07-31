@@ -12,7 +12,12 @@ from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
 from v2.config.paths import noaa_raw_dir
-from v2.config.sources import NOAA_CDO_DATA_URL
+from v2.config.sources import (
+    NOAA_CDO_DATA_URL,
+    NOAA_GHCND_DATASET_ID,
+    NOAA_GHCND_NYC_STORAGE_ID,
+    NOAA_NYC_LOCATION_ID,
+)
 
 
 DEFAULT_DATATYPES = ["PRCP", "TMAX", "TMIN", "SNOW", "SNWD"]
@@ -23,7 +28,7 @@ def main() -> int:
     parser.add_argument("--year", type=int, default=2025)
     parser.add_argument("--start-date", default=None)
     parser.add_argument("--end-date", default=None)
-    parser.add_argument("--datasetid", default="GHCND")
+    parser.add_argument("--datasetid", default=NOAA_GHCND_DATASET_ID)
     parser.add_argument("--datatypeid", action="append", default=None)
     parser.add_argument("--stationid", action="append", default=None)
     parser.add_argument("--locationid", action="append", default=None)
@@ -31,6 +36,7 @@ def main() -> int:
     parser.add_argument("--limit", type=int, default=1000)
     parser.add_argument("--initial-offset", type=int, default=1)
     parser.add_argument("--output", default=None)
+    parser.add_argument("--storage-datasetid", default=None)
     parser.add_argument("--token", default=None)
     parser.add_argument("--token-env", default="NOAA_TOKEN")
     parser.add_argument("--env-file", default=".env")
@@ -41,9 +47,20 @@ def main() -> int:
     parser.add_argument("--max-retries", type=int, default=3)
     args = parser.parse_args()
 
+    default_to_nyc_location(args)
+
     start_date, end_date = resolve_date_range(args.year, args.start_date, args.end_date)
     datatypes = args.datatypeid or DEFAULT_DATATYPES
-    output_dir = resolve_output_dir(args.output, noaa_raw_dir(args.year, args.datasetid))
+    storage_datasetid = resolve_storage_datasetid(
+        api_datasetid=args.datasetid,
+        stationids=args.stationid,
+        locationids=args.locationid,
+        storage_datasetid=args.storage_datasetid,
+    )
+    output_dir = resolve_output_dir(
+        args.output,
+        noaa_raw_dir(args.year, storage_datasetid),
+    )
 
     validate_args(args, datatypes)
 
@@ -60,6 +77,7 @@ def main() -> int:
     first_page_url = build_url(base_params, limit=args.limit, offset=args.initial_offset)
     print(f"Output : {output_dir}")
     print(f"Dataset: {args.datasetid}")
+    print(f"Storage: {storage_datasetid}")
     print(f"Dates  : {start_date} -> {end_date}")
     print(f"Types  : {', '.join(datatypes)}")
     if args.stationid:
@@ -87,6 +105,7 @@ def main() -> int:
         output_dir=output_dir,
         limit=args.limit,
         initial_offset=args.initial_offset,
+        storage_datasetid=storage_datasetid,
         overwrite=args.overwrite,
         sleep_seconds=args.sleep_seconds,
         max_retries=args.max_retries,
@@ -101,6 +120,13 @@ def resolve_date_range(
     return start_date or f"{year}-01-01", end_date or f"{year}-12-31"
 
 
+def default_to_nyc_location(args: argparse.Namespace) -> None:
+    if args.stationid or args.locationid or args.allow_global:
+        return
+
+    args.locationid = [NOAA_NYC_LOCATION_ID]
+
+
 def resolve_output_dir(output: str | None, default_output: Path) -> Path:
     if not output:
         return default_output
@@ -113,6 +139,21 @@ def resolve_output_dir(output: str | None, default_output: Path) -> Path:
         )
 
     return Path(normalize_databricks_path(output))
+
+
+def resolve_storage_datasetid(
+    api_datasetid: str,
+    stationids: list[str] | None,
+    locationids: list[str] | None,
+    storage_datasetid: str | None,
+) -> str:
+    if storage_datasetid:
+        return storage_datasetid
+
+    if not stationids and locationids and NOAA_NYC_LOCATION_ID in locationids:
+        return NOAA_GHCND_NYC_STORAGE_ID
+
+    return api_datasetid
 
 
 def normalize_databricks_path(path: str) -> str:
@@ -225,6 +266,7 @@ def download_pages(
     output_dir: Path,
     limit: int,
     initial_offset: int,
+    storage_datasetid: str,
     overwrite: bool,
     sleep_seconds: float,
     max_retries: int,
@@ -281,6 +323,7 @@ def download_pages(
         base_params=base_params,
         limit=limit,
         initial_offset=initial_offset,
+        storage_datasetid=storage_datasetid,
         pages=page_number,
         downloaded_results=downloaded_results,
         expected_count=expected_count,
@@ -326,6 +369,7 @@ def write_manifest(
     base_params: list[tuple[str, str]],
     limit: int,
     initial_offset: int,
+    storage_datasetid: str,
     pages: int,
     downloaded_results: int,
     expected_count: int | None,
@@ -334,6 +378,7 @@ def write_manifest(
         "source": "NOAA CDO API v2",
         "endpoint": NOAA_CDO_DATA_URL,
         "params": base_params,
+        "storage_datasetid": storage_datasetid,
         "limit": limit,
         "initial_offset": initial_offset,
         "pages": pages,
