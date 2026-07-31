@@ -62,7 +62,7 @@ pasta `v2` preservada.
 Opcao mais simples para a primeira execucao:
 
 ```text
-Databricks Repos conectado ao GitHub
+Databricks Git folders conectado ao GitHub
 ```
 
 Alternativa futura:
@@ -342,7 +342,7 @@ Melhorias para uma segunda etapa:
 2. Adicionar taxi zone lookup na dim_localizacao
 3. Criar checks automatizados de qualidade
 4. Definir particionamento fisico das tabelas Delta
-5. Aplicar OPTIMIZE/ZORDER no Databricks
+5. Avaliar predictive optimization, liquid clustering ou OPTIMIZE/ZORDER
 6. Planejar processamento incremental
 7. Criar camada ML a partir da Gold diaria
 ```

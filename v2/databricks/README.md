@@ -45,7 +45,7 @@ repositorio deve ser disponibilizado preservando a pasta `v2`.
 Opcoes:
 
 ```text
-Databricks Repos apontando para este repositorio Git
+Databricks Git folders apontando para este repositorio Git
 ```
 
 ou:
@@ -54,7 +54,7 @@ ou:
 deploy do projeto como wheel/package no cluster
 ```
 
-Para esta V2, o caminho mais simples e usar Databricks Repos durante a primeira
+Para esta V2, o caminho mais simples e usar Databricks Git folders durante a primeira
 execucao cloud.
 
 ### Ingest NYC TLC

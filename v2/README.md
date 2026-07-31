@@ -24,6 +24,12 @@ Roteiro operacional para recriar Azure e executar a V2:
 v2/docs/plano_execucao_azure_v2.md
 ```
 
+Referencias praticas de Databricks, Spark e Azure:
+
+```text
+v2/docs/referencias_databricks_spark_azure.md
+```
+
 Importante: `v2/data/raw` e `v2/data/delta` nao sao versionados no Git. Para
 continuar em outra maquina, rebaixe os dados ou copie essas pastas manualmente.
 
