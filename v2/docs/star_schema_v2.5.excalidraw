@@ -1,0 +1,929 @@
+{
+  "type": "excalidraw",
+  "version": 2,
+  "source": "https://excalidraw.com",
+  "elements": [
+    {
+      "id": "title",
+      "type": "text",
+      "x": 346.9047546386719,
+      "y": -33.71429443359375,
+      "width": 571.3333129882812,
+      "height": 35,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 101,
+      "version": 16,
+      "versionNonce": 102392456,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502212621,
+      "link": null,
+      "locked": false,
+      "text": "NYC Taxi Lakehouse V2.5 - Star Schema",
+      "fontSize": 28,
+      "fontFamily": 1,
+      "textAlign": "center",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "NYC Taxi Lakehouse V2.5 - Star Schema",
+      "lineHeight": 1.25,
+      "baseline": 26,
+      "index": "a0",
+      "autoResize": true
+    },
+    {
+      "id": "fact_box",
+      "type": "rectangle",
+      "x": 460,
+      "y": 270,
+      "width": 363.42860630580344,
+      "height": 459.4285365513393,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#f8f9fa",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 3
+      },
+      "seed": 102,
+      "version": 58,
+      "versionNonce": 1873925112,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "arrow_loc_fact",
+          "type": "arrow"
+        },
+        {
+          "id": "arrow_fact_clima",
+          "type": "arrow"
+        },
+        {
+          "id": "arrow_data_fact",
+          "type": "arrow"
+        },
+        {
+          "id": "arrow_fact_daily",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1785502170649,
+      "link": null,
+      "locked": false,
+      "index": "a1"
+    },
+    {
+      "id": "fact_text",
+      "type": "text",
+      "x": 490,
+      "y": 292,
+      "width": 256.3541564941406,
+      "height": 427.5,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 103,
+      "version": 3,
+      "versionNonce": 863056776,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502150449,
+      "link": null,
+      "locked": false,
+      "text": "fact_trips\n\nid_corrida (PK opcional)\ndata_id (FK)\nclima_id (FK)\nlocalizacao_partida_id (FK)\nlocalizacao_chegada_id (FK)\n\ndata_hora_partida\ndata_hora_chegada\nduracao_minutos\nqtd_passageiros\ntipo_pagamento\ndistancia_km\nvalor_total\ngorjeta\nperiodo_dia\nhorario_pico\nregistro_suspeito",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "fact_trips\n\nid_corrida (PK opcional)\ndata_id (FK)\nclima_id (FK)\nlocalizacao_partida_id (FK)\nlocalizacao_chegada_id (FK)\n\ndata_hora_partida\ndata_hora_chegada\nduracao_minutos\nqtd_passageiros\ntipo_pagamento\ndistancia_km\nvalor_total\ngorjeta\nperiodo_dia\nhorario_pico\nregistro_suspeito",
+      "lineHeight": 1.25,
+      "baseline": 285,
+      "index": "a2",
+      "autoResize": true
+    },
+    {
+      "id": "dim_data_box",
+      "type": "rectangle",
+      "x": 490.87253703855936,
+      "y": 34.072507781471714,
+      "width": 311.9693511460957,
+      "height": 173.14077719654318,
+      "angle": 0.0006496775653204168,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#e7f5ff",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 3
+      },
+      "seed": 104,
+      "version": 89,
+      "versionNonce": 1267952632,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "arrow_data_fact",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1785502231048,
+      "link": null,
+      "locked": false,
+      "index": "a3"
+    },
+    {
+      "id": "dim_data_text",
+      "type": "text",
+      "x": 513.4286934988841,
+      "y": 43.71429443359375,
+      "width": 160.5833282470703,
+      "height": 157.5,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 105,
+      "version": 33,
+      "versionNonce": 712024200,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502233538,
+      "link": null,
+      "locked": false,
+      "text": "dim_data\n\ndata_id (PK)\ndata\nano, mes, dia_mes\ndia_semana_nome\nfim_de_semana",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "dim_data\n\ndata_id (PK)\ndata\nano, mes, dia_mes\ndia_semana_nome\nfim_de_semana",
+      "lineHeight": 1.25,
+      "baseline": 105,
+      "index": "a4",
+      "autoResize": true
+    },
+    {
+      "id": "dim_localizacao_box",
+      "type": "rectangle",
+      "x": 40,
+      "y": 330,
+      "width": 322.0000348772321,
+      "height": 319.142848423549,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#fff4e6",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 3
+      },
+      "seed": 106,
+      "version": 47,
+      "versionNonce": 894855048,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "arrow_loc_fact",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1785502197985,
+      "link": null,
+      "locked": false,
+      "index": "a5"
+    },
+    {
+      "id": "dim_localizacao_text",
+      "type": "text",
+      "x": 65,
+      "y": 350,
+      "width": 221.5416717529297,
+      "height": 292.5,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 107,
+      "version": 3,
+      "versionNonce": 298941576,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502110560,
+      "link": null,
+      "locked": false,
+      "text": "dim_localizacao\n\nlocalizacao_id (PK)\nlocation_id\nborough\nzona\nzona_servico\n\nFonte: Taxi Zone Lookup\n\nRole-playing dimension:\npartida e chegada usam\na mesma dimensao",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "dim_localizacao\n\nlocalizacao_id (PK)\nlocation_id\nborough\nzona\nzona_servico\n\nFonte: Taxi Zone Lookup\n\nRole-playing dimension:\npartida e chegada usam\na mesma dimensao",
+      "lineHeight": 1.25,
+      "baseline": 140,
+      "index": "a6",
+      "autoResize": true
+    },
+    {
+      "id": "dim_clima_box",
+      "type": "rectangle",
+      "x": 910,
+      "y": 270,
+      "width": 387.28567940848205,
+      "height": 500.8571079799108,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#ebfbee",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 3
+      },
+      "seed": 108,
+      "version": 38,
+      "versionNonce": 1023317128,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "arrow_fact_clima",
+          "type": "arrow"
+        },
+        {
+          "id": "arrow_noaa_clima",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1785502192971,
+      "link": null,
+      "locked": false,
+      "index": "a7"
+    },
+    {
+      "id": "dim_clima_text",
+      "type": "text",
+      "x": 935,
+      "y": 292,
+      "width": 279.9583435058594,
+      "height": 467.5,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 109,
+      "version": 25,
+      "versionNonce": 688905864,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502547906,
+      "link": null,
+      "locked": false,
+      "text": "dim_clima\n\nclima_id (PK)\ndata\nfonte_clima = NOAA_GHCND\nescopo_clima = NYC consolidado\n\nqtd_estacoes\nqtd_estacoes_completas\ncobertura_estacoes_pct\nqtd_estacoes_com_precipitacao\nqtd_estacoes_com_temperatura\nprecipitacao_media_mm\nprecipitacao_max_mm\ntemp_max_media_c\ntemp_min_media_c\ntemp_media_c\nneve_media_mm\nneve_max_mm\nteve_chuva, teve_neve\ncategoria_temperatura\nregistro_clima_incompleto",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "dim_clima\n\nclima_id (PK)\ndata\nfonte_clima = NOAA_GHCND\nescopo_clima = NYC consolidado\n\nqtd_estacoes\nqtd_estacoes_completas\ncobertura_estacoes_pct\nqtd_estacoes_com_precipitacao\nqtd_estacoes_com_temperatura\nprecipitacao_media_mm\nprecipitacao_max_mm\ntemp_max_media_c\ntemp_min_media_c\ntemp_media_c\nneve_media_mm\nneve_max_mm\nteve_chuva, teve_neve\ncategoria_temperatura\nregistro_clima_incompleto",
+      "lineHeight": 1.25,
+      "baseline": 270,
+      "index": "a8",
+      "autoResize": true
+    },
+    {
+      "id": "noaa_box",
+      "type": "rectangle",
+      "x": 910,
+      "y": 80,
+      "width": 385,
+      "height": 158.71429443359375,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#f1f3f5",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 3
+      },
+      "seed": 110,
+      "version": 19,
+      "versionNonce": 1653800328,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "arrow_noaa_clima",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1785502237581,
+      "link": null,
+      "locked": false,
+      "index": "a9"
+    },
+    {
+      "id": "noaa_text",
+      "type": "text",
+      "x": 937.2858537946429,
+      "y": 94.28575788225447,
+      "width": 246.3125,
+      "height": 135,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 111,
+      "version": 9,
+      "versionNonce": 871794168,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502238898,
+      "link": null,
+      "locked": false,
+      "text": "NOAA varias estacoes\n\nPaginacao por offset\nSilver: estacao/dia\nGold: agregacao diaria NYC\nResultado: 1 clima por data",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "NOAA varias estacoes\n\nPaginacao por offset\nSilver: estacao/dia\nGold: agregacao diaria NYC\nResultado: 1 clima por data",
+      "lineHeight": 1.25,
+      "baseline": 100,
+      "index": "aA",
+      "autoResize": true
+    },
+    {
+      "id": "daily_gold_box",
+      "type": "rectangle",
+      "x": 450.2857317243304,
+      "y": 799.4284493582591,
+      "width": 394.2857142857142,
+      "height": 142.14285714285722,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#fff9db",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 3
+      },
+      "seed": 112,
+      "version": 88,
+      "versionNonce": 1867262600,
+      "isDeleted": false,
+      "boundElements": [
+        {
+          "id": "arrow_fact_daily",
+          "type": "arrow"
+        },
+        {
+          "id": "arrow_clima_daily",
+          "type": "arrow"
+        }
+      ],
+      "updated": 1785502189505,
+      "link": null,
+      "locked": false,
+      "index": "aB"
+    },
+    {
+      "id": "daily_gold_text",
+      "type": "text",
+      "x": 470.71437290736594,
+      "y": 811.4284842354912,
+      "width": 351.8125,
+      "height": 112.5,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 113,
+      "version": 54,
+      "versionNonce": 1822387448,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502292252,
+      "link": null,
+      "locked": false,
+      "text": "data_mart_daily_weather_demand\n\n1 linha por dia\nBase para EDA/ML\ndemanda diaria + clima NYC consolidado",
+      "fontSize": 18,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "data_mart_daily_weather_demand\n\n1 linha por dia\nBase para EDA/ML\ndemanda diaria + clima NYC consolidado",
+      "lineHeight": 1.25,
+      "baseline": 80,
+      "index": "aC",
+      "autoResize": true
+    },
+    {
+      "id": "note_box",
+      "type": "rectangle",
+      "x": 40,
+      "y": 70,
+      "width": 330,
+      "height": 186.28572736467635,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "#fff0f6",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 3
+      },
+      "seed": 114,
+      "version": 12,
+      "versionNonce": 669106312,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502117506,
+      "link": null,
+      "locked": false,
+      "index": "aD"
+    },
+    {
+      "id": "note_text",
+      "type": "text",
+      "x": 60,
+      "y": 90,
+      "width": 267.1963762555803,
+      "height": 148.75,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 1,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": null,
+      "seed": 115,
+      "version": 47,
+      "versionNonce": 1036471432,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502115573,
+      "link": null,
+      "locked": false,
+      "text": "Regra importante\n\nA fact nao junta direto com\nvarias estacoes NOAA.\nAntes, o clima e consolidado\npara 1 linha por data.\nIsso evita duplicar corridas.",
+      "fontSize": 17,
+      "fontFamily": 1,
+      "textAlign": "left",
+      "verticalAlign": "top",
+      "containerId": null,
+      "originalText": "Regra importante\n\nA fact nao junta direto com varias estacoes NOAA.\nAntes, o clima e consolidado para 1 linha por data.\nIsso evita duplicar corridas.",
+      "lineHeight": 1.25,
+      "baseline": 110,
+      "index": "aE",
+      "autoResize": false
+    },
+    {
+      "id": "arrow_data_fact",
+      "type": "arrow",
+      "x": 646.7260340738142,
+      "y": 213.21321929035153,
+      "width": 0.8983659104417256,
+      "height": 50.78678070964847,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 2
+      },
+      "seed": 116,
+      "version": 142,
+      "versionNonce": 120794360,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502231050,
+      "link": null,
+      "locked": false,
+      "startBinding": {
+        "mode": "orbit",
+        "elementId": "dim_data_box",
+        "fixedPoint": [
+          0.5001,
+          1
+        ]
+      },
+      "endBinding": {
+        "mode": "orbit",
+        "elementId": "fact_box",
+        "fixedPoint": [
+          0.49984880335168874,
+          0.49984880335168863
+        ]
+      },
+      "lastCommittedPoint": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -0.8983659104417256,
+          50.78678070964847
+        ]
+      ],
+      "index": "aF",
+      "moveMidPointsWithElement": false
+    },
+    {
+      "id": "arrow_loc_fact",
+      "type": "arrow",
+      "x": 368.000034877232,
+      "y": 448.20012396565477,
+      "width": 85.999965122768,
+      "height": 1.888500259978457,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 2
+      },
+      "seed": 117,
+      "version": 100,
+      "versionNonce": 1949316744,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502197985,
+      "link": null,
+      "locked": false,
+      "startBinding": {
+        "mode": "orbit",
+        "elementId": "dim_localizacao_box",
+        "fixedPoint": [
+          0.6380644020470346,
+          0.3619355979529656
+        ]
+      },
+      "endBinding": {
+        "mode": "orbit",
+        "elementId": "fact_box",
+        "fixedPoint": [
+          0.3992052741311833,
+          0.3992052741311833
+        ]
+      },
+      "lastCommittedPoint": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          85.999965122768,
+          1.888500259978457
+        ]
+      ],
+      "index": "aG",
+      "moveMidPointsWithElement": false
+    },
+    {
+      "id": "arrow_fact_clima",
+      "type": "arrow",
+      "x": 829.4286063058034,
+      "y": 446.1590874753147,
+      "width": 74.57139369419667,
+      "height": 2.0989550884351047,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 2
+      },
+      "seed": 118,
+      "version": 150,
+      "versionNonce": 635998856,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502204577,
+      "link": null,
+      "locked": false,
+      "startBinding": {
+        "elementId": "fact_box",
+        "mode": "orbit",
+        "fixedPoint": [
+          0.607461472847022,
+          0.39253852715297766
+        ]
+      },
+      "endBinding": {
+        "elementId": "dim_clima_box",
+        "mode": "orbit",
+        "fixedPoint": [
+          0.33979194935299695,
+          0.3397919493529967
+        ]
+      },
+      "lastCommittedPoint": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          74.57139369419667,
+          -2.0989550884351047
+        ]
+      ],
+      "index": "aH",
+      "moveMidPointsWithElement": false
+    },
+    {
+      "id": "arrow_noaa_clima",
+      "type": "arrow",
+      "x": 1102.5322569873447,
+      "y": 244.71429443359372,
+      "width": 0.02006681732063953,
+      "height": 19.28570556640628,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 2
+      },
+      "seed": 119,
+      "version": 50,
+      "versionNonce": 963251336,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502237582,
+      "link": null,
+      "locked": false,
+      "startBinding": {
+        "mode": "orbit",
+        "elementId": "noaa_box",
+        "fixedPoint": [
+          0.5001,
+          1
+        ]
+      },
+      "endBinding": {
+        "mode": "orbit",
+        "elementId": "dim_clima_box",
+        "fixedPoint": [
+          0.4963964945812978,
+          0.4963964945812983
+        ]
+      },
+      "lastCommittedPoint": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -0.02006681732063953,
+          19.28570556640628
+        ]
+      ],
+      "index": "aI",
+      "moveMidPointsWithElement": false
+    },
+    {
+      "id": "arrow_fact_daily",
+      "type": "arrow",
+      "x": 648.1209214955072,
+      "y": 735.4285365513391,
+      "width": 0.5916942181657987,
+      "height": 57.99991280691995,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 2
+      },
+      "seed": 120,
+      "version": 161,
+      "versionNonce": 276142472,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502189505,
+      "link": null,
+      "locked": false,
+      "startBinding": {
+        "elementId": "fact_box",
+        "mode": "orbit",
+        "fixedPoint": [
+          0.5239362093268307,
+          0.5239362093268303
+        ]
+      },
+      "endBinding": {
+        "elementId": "daily_gold_box",
+        "mode": "orbit",
+        "fixedPoint": [
+          0.5001,
+          0
+        ]
+      },
+      "lastCommittedPoint": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -0.5916942181657987,
+          57.99991280691995
+        ]
+      ],
+      "index": "aJ",
+      "moveMidPointsWithElement": false
+    },
+    {
+      "id": "arrow_clima_daily",
+      "type": "arrow",
+      "x": 907.5042921994104,
+      "y": 754.9225168307727,
+      "width": 69.72514176371969,
+      "height": 45.62610754575758,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "dashed",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 2
+      },
+      "seed": 121,
+      "version": 190,
+      "versionNonce": 674828936,
+      "isDeleted": false,
+      "boundElements": [],
+      "updated": 1785502192972,
+      "link": null,
+      "locked": false,
+      "startBinding": null,
+      "endBinding": null,
+      "lastCommittedPoint": null,
+      "startArrowhead": null,
+      "endArrowhead": "arrow",
+      "points": [
+        [
+          0,
+          0
+        ],
+        [
+          -33.70100922216387,
+          21.463212277765138
+        ],
+        [
+          -69.72514176371969,
+          45.62610754575758
+        ]
+      ],
+      "index": "aK",
+      "moveMidPointsWithElement": false
+    }
+  ],
+  "appState": {
+    "gridSize": 20,
+    "gridStep": 5,
+    "gridModeEnabled": false,
+    "viewBackgroundColor": "#ffffff",
+    "lockedMultiSelections": {}
+  },
+  "files": {}
+}

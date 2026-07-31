@@ -1,10 +1,15 @@
-# NYC Taxi Lakehouse V2
+# NYC Taxi Lakehouse V2 / V2.5
 
 V2 e a refatoracao local-first do projeto.
 
 Nesta versao, o projeto saiu do recorte de 2024 da V1 e passou a trabalhar com
 dados de 2025. A logica principal continua sendo Bronze, Silver e Gold, mas agora
 com codigo PySpark reaproveitavel localmente e depois no Azure Databricks.
+
+A V2 validou a abordagem com a estacao Central Park como referencia climatica.
+A evolucao V2.5 melhora essa ideia: buscar varias estacoes NOAA de NYC com
+paginacao, consolidar o clima por dia e manter a `dim_clima` com 1 linha por
+data.
 
 Historico tecnico da refatoracao:
 
@@ -28,6 +33,13 @@ Referencias praticas de Databricks, Spark e Azure:
 
 ```text
 v2/docs/referencias_databricks_spark_azure.md
+```
+
+Modelagem proposta V2.5:
+
+```text
+v2/docs/star_schema_v2.5.excalidraw
+v2/docs/star_schema_v2.5.excalidraw.png
 ```
 
 Importante: `v2/data/raw` e `v2/data/delta` nao sao versionados no Git. Para
@@ -112,6 +124,16 @@ Baixar clima da NOAA para 2025, usando a estacao Central Park:
 poetry run ingest-noaa-weather \
   --year 2025 \
   --stationid GHCND:USW00094728
+```
+
+Na V2.5, a ingestao NOAA evolui para varias estacoes de NYC. A regra de
+modelagem continua sendo manter a Gold com 1 linha de clima por data:
+
+```text
+NOAA varias estacoes
+  -> Silver NOAA: 1 linha por estacao/dia
+  -> Gold/dim_clima: clima NYC consolidado, 1 linha por data
+  -> fact_trips: join por data/clima_id sem duplicar corridas
 ```
 
 O token local pode ficar em `.env`:
@@ -209,6 +231,7 @@ fact_trips sem chaves orfas
 
 - Paginacao da API NOAA com `offset`.
 - Clima 2025 com 365 dias para Central Park.
+- Desenho V2.5 para clima NYC consolidado usando varias estacoes NOAA.
 - Silver TLC com colunas temporais, duracao, passageiros, pagamento e flags.
 - Gold diaria usando calendario completo para evitar perda de dias no join.
 - Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` e `fact_trips`.

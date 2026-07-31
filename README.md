@@ -15,7 +15,7 @@ O repositorio possui duas fases do mesmo projeto:
 | Versao | Periodo | Status | Descricao |
 |---|---:|---|---|
 | V1 | 2024 | Preservada | Projeto original em Azure, ADF, Databricks, PySpark e Delta Lake. |
-| V2 | 2025 | Em refatoracao | Reconstrucao local-first com Poetry, PySpark e Delta Lake, preparada para voltar ao Azure depois. |
+| V2/V2.5 | 2025 | Em refatoracao | Reconstrucao local-first com Poetry, PySpark e Delta Lake, preparada para voltar ao Azure depois. |
 
 A V1 gerou a Gold publicada no Kaggle:
 
@@ -50,7 +50,8 @@ https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-12.parquet
 
 Dados climaticos da API CDO da NOAA.
 
-Na V2, a estrategia mudou para uma unica estacao meteorologica:
+Na primeira etapa da V2, a estrategia usou uma unica estacao meteorologica como
+referencia:
 
 ```text
 Central Park
@@ -59,7 +60,28 @@ dataset: GHCND
 variaveis: PRCP, TMAX, TMIN, SNOW, SNWD
 ```
 
-Essa escolha reduz complexidade e evita o problema da V1, onde muitas estacoes por cidade geravam limite de API e cobertura parcial.
+Essa escolha reduziu complexidade e validou a paginacao. A evolucao V2.5 volta
+para uma ideia mais madura da V1:
+
+```text
+NOAA varias estacoes de NYC
+  -> paginacao por offset
+  -> Silver NOAA com 1 linha por estacao/dia
+  -> agregacao diaria de clima NYC
+  -> dim_clima com 1 linha por data
+```
+
+A regra principal da modelagem e que a `fact_trips` nao deve juntar diretamente
+com varias estacoes NOAA. Antes do join, o clima precisa ser consolidado para uma
+linha por dia. Isso evita duplicar corridas.
+
+Modelagem proposta:
+
+[v2/docs/star_schema_v2.5.excalidraw](v2/docs/star_schema_v2.5.excalidraw)
+
+Preview em PNG:
+
+[v2/docs/star_schema_v2.5.excalidraw.png](v2/docs/star_schema_v2.5.excalidraw.png)
 
 ## Arquitetura
 
@@ -258,7 +280,8 @@ chaves_orfas = 0
 - Projeto local-first com Poetry.
 - Ingestao NYC TLC 2025 automatizada.
 - Ingestao NOAA com paginacao por `offset`.
-- Foco em Central Park para simplificar a analise climatica.
+- Validacao inicial com Central Park como referencia climatica.
+- Planejamento V2.5 para consolidar clima diario de NYC usando varias estacoes NOAA.
 - Bronze e Silver em Delta Lake para TLC e NOAA.
 - Silver TLC com colunas temporais, duracao, distancia em km, pagamento, flags e categorias.
 - Silver NOAA com clima diario em uma linha por data.
@@ -274,6 +297,7 @@ Na V2:
 
 - a NOAA usa paginacao;
 - a cobertura climatica tem 365 dias;
+- a V2.5 consolida varias estacoes antes de ligar clima com corridas;
 - a Gold diaria usa calendario completo;
 - a Gold dimensional liga `fact_trips` com `dim_clima` por data;
 - o join entre clima e demanda ocorre por `data`;
@@ -282,6 +306,7 @@ Na V2:
 ## Proximos Passos
 
 - Criar dicionario de dados.
+- Implementar clima NYC consolidado a partir de varias estacoes NOAA.
 - Recriar infraestrutura Azure seguindo `v2/docs/plano_execucao_azure_v2.md`.
 - Executar Silver e Gold completas no Databricks.
 - Enriquecer `dim_localizacao` com taxi zone lookup.

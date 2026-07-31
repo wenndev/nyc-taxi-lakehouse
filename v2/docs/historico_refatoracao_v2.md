@@ -48,6 +48,14 @@ Decisao para a V2:
 - Manter a logica Bronze, Silver e Gold.
 - Escrever codigo PySpark reutilizavel localmente e depois no Databricks.
 
+Evolucao definida depois:
+
+- Avancar para uma V2.5 usando varias estacoes NOAA de NYC.
+- Manter a paginacao por `offset`.
+- Consolidar clima por data antes da Gold.
+- Garantir que `dim_clima` continue com 1 linha por dia.
+- Evitar join direto da fato com varias estacoes, pois isso duplicaria corridas.
+
 ## Organizacao da V2
 
 Foi decidido manter:
