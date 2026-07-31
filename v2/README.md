@@ -231,6 +231,48 @@ fact_trips sem clima_id nulo
 fact_trips sem chaves orfas
 ```
 
+## Validacao Atual V2.5
+
+NOAA raw:
+
+```text
+escopo = CITY:US360019
+paginas = 76
+downloaded_results = 75991
+expected_count = 75991
+```
+
+Silver NOAA:
+
+```text
+linhas = 33074
+dias = 365
+estacoes = 124
+periodo = 2025-01-01 ate 2025-12-31
+grao = 1 linha por estacao/data
+```
+
+Clima consolidado para Gold:
+
+```text
+linhas = 365
+dias_distintos = 365
+min_estacoes_dia = 75
+max_estacoes_dia = 108
+media_estacoes_dia = 90.61
+dias_clima_incompleto = 0
+```
+
+Gold Star Schema dev:
+
+```text
+dim_data = 365
+dim_clima = 365
+dim_localizacao = 254
+fact_trips = 97065
+fact_trips.clima_id_nulo = 0
+```
+
 ## Evolucoes da V1 ja enderecadas
 
 - Paginacao da API NOAA com `offset`.

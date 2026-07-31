@@ -405,7 +405,7 @@ Comandos principais:
 ```bash
 poetry install
 poetry run ingest-nyc-tlc
-poetry run ingest-noaa-weather --year 2025 --stationid GHCND:USW00094728
+poetry run ingest-noaa-weather --year 2025
 poetry run bronze-nyc-tlc --skip-count
 poetry run bronze-noaa-weather --skip-count
 poetry run silver-noaa-weather
@@ -469,3 +469,51 @@ O que deve ser reaproveitado:
 - Planejar particionamento Bronze.
 - Implementar infraestrutura Azure novamente.
 - Configurar CI/CD.
+
+## Validacao V2.5 Com Varias Estacoes NOAA
+
+Depois da mudanca para `locationid=CITY:US360019`, a ingestao NOAA 2025 foi
+executada com paginacao por `offset`.
+
+Raw NOAA:
+
+```text
+storage_datasetid = GHCND_NYC
+paginas = 76
+downloaded_results = 75991
+expected_count = 75991
+periodo = 2025-01-01 ate 2025-12-31
+```
+
+Silver NOAA:
+
+```text
+linhas = 33074
+dias = 365
+estacoes = 124
+grao = 1 linha por estacao/data
+```
+
+Consolidacao diaria para Gold:
+
+```text
+linhas = 365
+dias_distintos = 365
+min_estacoes_dia = 75
+max_estacoes_dia = 108
+media_estacoes_dia = 90.61
+dias_clima_incompleto = 0
+```
+
+Gold Star Schema dev com amostra TLC:
+
+```text
+dim_data = 365
+dim_clima = 365
+dim_localizacao = 254
+fact_trips = 97065
+fact_trips.data_id_nulo = 0
+fact_trips.clima_id_nulo = 0
+fact_trips.localizacao_partida_id_nulo = 0
+fact_trips.localizacao_chegada_id_nulo = 0
+```

@@ -246,11 +246,31 @@ dias_2025 = 365
 NOAA 2025:
 
 ```text
-Fluxo V2.5 atual: usar locationid CITY:US360019.
-Validar apos a ingestao:
-downloaded_results == expected_count
+escopo = CITY:US360019
+paginas = 76
+downloaded_results = 75991
+expected_count = 75991
 dias distintos = 365
+estacoes distintas = 124
 periodo = 2025-01-01 ate 2025-12-31
+```
+
+Silver NOAA V2.5:
+
+```text
+linhas = 33074
+grao = 1 linha por estacao/data
+```
+
+Clima consolidado para Gold:
+
+```text
+linhas = 365
+grao = 1 linha por data
+min_estacoes_dia = 75
+max_estacoes_dia = 108
+media_estacoes_dia = 90.61
+dias_clima_incompleto = 0
 ```
 
 Gold diaria dev:
@@ -265,8 +285,12 @@ Gold Star Schema dev:
 ```text
 dim_data = 365
 dim_clima = 365
+dim_localizacao = 254
+fact_trips = 97065
 fact_trips.clima_id_nulo = 0
-chaves_orfas = 0
+fact_trips.data_id_nulo = 0
+fact_trips.localizacao_partida_id_nulo = 0
+fact_trips.localizacao_chegada_id_nulo = 0
 ```
 
 ## Principais Melhorias da V2
@@ -301,8 +325,6 @@ Na V2:
 ## Proximos Passos
 
 - Criar dicionario de dados.
-- Rodar a ingestao NOAA V2.5 completa com `CITY:US360019`.
-- Validar Bronze, Silver e Gold com varias estacoes NOAA.
 - Recriar infraestrutura Azure seguindo `v2/docs/plano_execucao_azure_v2.md`.
 - Executar Silver e Gold completas no Databricks.
 - Enriquecer `dim_localizacao` com taxi zone lookup.
