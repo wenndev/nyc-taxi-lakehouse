@@ -209,6 +209,18 @@ poetry run gold-star-schema \
   --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
+Visualizar a relacao clima x demanda:
+
+```bash
+poetry run jupyter lab
+```
+
+Abrir:
+
+```text
+v2/notebooks/04_eda_weather_demand.ipynb
+```
+
 ## Teste Local Leve
 
 A Silver completa da TLC pode ser pesada localmente. Para validar sem travar a maquina:

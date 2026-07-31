@@ -79,6 +79,7 @@ v2/
     01_inspect_bronze_nyc_tlc.ipynb
     02_inspect_silver_nyc_tlc.ipynb
     03_inspect_gold_star_schema.ipynb
+    04_eda_weather_demand.ipynb
 
   data/
     raw/
@@ -301,4 +302,5 @@ Notebooks de inspecao:
 v2/notebooks/01_inspect_bronze_nyc_tlc.ipynb
 v2/notebooks/02_inspect_silver_nyc_tlc.ipynb
 v2/notebooks/03_inspect_gold_star_schema.ipynb
+v2/notebooks/04_eda_weather_demand.ipynb
 ```
