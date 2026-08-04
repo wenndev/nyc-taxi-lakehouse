@@ -77,7 +77,9 @@ v2/
       storage.py
     gold/
       gold_daily_weather_demand.py
+      validate_gold_daily_weather_demand.py
       gold_star_schema.py
+      validate_gold_star_schema.py
   databricks/
     notebooks/
       ingest_nyc_tlc.py
@@ -90,7 +92,9 @@ v2/
       silver_taxi_zone_lookup.py
       silver_noaa_weather.py
       gold_daily_weather_demand.py
+      validate_gold_daily_weather_demand.py
       gold_star_schema.py
+      validate_gold_star_schema.py
 
   notebooks/
     01_inspect_bronze_nyc_tlc.ipynb
@@ -260,6 +264,13 @@ poetry run gold-daily-weather-demand \
   --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
+Validar a Gold diaria, base para EDA/ML:
+
+```bash
+poetry run validate-gold-daily-weather-demand --dry-run
+poetry run validate-gold-daily-weather-demand
+```
+
 Criar Gold dimensional:
 
 ```bash
@@ -282,6 +293,11 @@ Teste local leve com amostra da TLC:
 poetry run gold-daily-weather-demand \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
   --output v2/data/delta/dev/gold/daily_weather_demand/2025_01
+
+poetry run validate-gold-daily-weather-demand \
+  --input v2/data/delta/dev/gold/daily_weather_demand/2025_01 \
+  --min-days-with-demand 1 \
+  --min-total-trips 1
 
 poetry run gold-star-schema \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \

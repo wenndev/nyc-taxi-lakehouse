@@ -30,6 +30,22 @@ poetry run gold-daily-weather-demand --dry-run
 poetry run gold-daily-weather-demand
 ```
 
+Validacao automatica depois da Gold diaria:
+
+```bash
+poetry run validate-gold-daily-weather-demand --dry-run
+poetry run validate-gold-daily-weather-demand
+```
+
+Esse check falha se encontrar:
+
+- quantidade de linhas diferente de 365 para 2025;
+- datas nulas, duplicadas ou fora do ano;
+- `qtd_corridas` nula ou negativa;
+- ausencia total de demanda;
+- dias sem clima associado;
+- colunas climaticas essenciais nulas.
+
 Teste local com amostra da TLC:
 
 ```bash

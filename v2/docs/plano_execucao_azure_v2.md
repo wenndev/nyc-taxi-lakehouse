@@ -153,8 +153,9 @@ Ordem recomendada no ADF:
 8. silver_taxi_zone_lookup com Data Quality Lookup
 9. silver_noaa_weather com Data Quality NOAA
 10. gold_daily_weather_demand
-11. gold_star_schema
-12. validate_gold_star_schema
+11. validate_gold_daily_weather_demand
+12. gold_star_schema
+13. validate_gold_star_schema
 ```
 
 ## Notebooks Databricks
@@ -178,6 +179,7 @@ silver_nyc_tlc.py
 silver_taxi_zone_lookup.py
 silver_noaa_weather.py
 gold_daily_weather_demand.py
+validate_gold_daily_weather_demand.py
 gold_star_schema.py
 validate_gold_star_schema.py
 ```
@@ -319,6 +321,18 @@ skip_count=false
 dry_run=false
 ```
 
+### validate_gold_daily_weather_demand
+
+```text
+year=2025
+input=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
+expected_days=365
+min_days_with_demand=1
+min_total_trips=1
+allow_incomplete_weather=false
+dry_run=false
+```
+
 ### gold_star_schema
 
 ```text
@@ -389,6 +403,9 @@ Validar Gold diaria:
 ```text
 linhas == 365
 dias_sem_clima == 0
+registro_alinhamento_incompleto == 0
+qtd_corridas_nula == 0
+total_corridas > 0
 ```
 
 Validar Gold Star Schema:
@@ -415,10 +432,11 @@ chaves_orfas == 0
 6. Rodar Bronze TLC.
 7. Rodar Silver TLC com `skip_count=true`.
 8. Rodar Gold diaria.
-9. Rodar Gold Star Schema com `skip_count=true`.
-10. Rodar `validate_gold_star_schema`.
-11. Rodar queries de validacao exploratorias no Databricks se quiser investigar.
-12. So depois pensar em OPTIMIZE, ZORDER, incremental e ML.
+9. Rodar `validate_gold_daily_weather_demand`.
+10. Rodar Gold Star Schema com `skip_count=true`.
+11. Rodar `validate_gold_star_schema`.
+12. Rodar queries de validacao exploratorias no Databricks se quiser investigar.
+13. So depois pensar em OPTIMIZE, ZORDER, incremental e ML.
 
 ## Pontos De Atencao
 

@@ -21,6 +21,7 @@ v2/databricks/notebooks/silver_nyc_tlc.py
 v2/databricks/notebooks/silver_taxi_zone_lookup.py
 v2/databricks/notebooks/silver_noaa_weather.py
 v2/databricks/notebooks/gold_daily_weather_demand.py
+v2/databricks/notebooks/validate_gold_daily_weather_demand.py
 v2/databricks/notebooks/gold_star_schema.py
 v2/databricks/notebooks/validate_gold_star_schema.py
 ```
@@ -38,8 +39,9 @@ v2/databricks/notebooks/validate_gold_star_schema.py
 8. silver_taxi_zone_lookup
 9. silver_noaa_weather
 10. gold_daily_weather_demand
-11. gold_star_schema
-12. validate_gold_star_schema
+11. validate_gold_daily_weather_demand
+12. gold_star_schema
+13. validate_gold_star_schema
 ```
 
 Os notebooks de Bronze, Silver e Gold reutilizam as funcoes PySpark em
@@ -312,6 +314,35 @@ tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
 noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
 ```
+
+### Validate Gold Daily Weather Demand
+
+Parametros principais no ADF:
+
+```text
+year
+input
+expected_days
+min_days_with_demand
+min_total_trips
+allow_incomplete_weather
+dry_run
+```
+
+Exemplo:
+
+```text
+year=2025
+input=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
+expected_days=365
+min_days_with_demand=1
+min_total_trips=1
+allow_incomplete_weather=false
+dry_run=false
+```
+
+Esse notebook valida a base diaria usada em EDA/ML. Se retornar `FAIL`, o
+notebook falha e o ADF marca o pipeline como falho.
 
 ### Gold Star Schema
 

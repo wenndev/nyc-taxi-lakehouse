@@ -238,6 +238,12 @@ poetry run gold-daily-weather-demand \
   --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
 ```
 
+Validar a Gold diaria, base para EDA/ML:
+
+```bash
+poetry run validate-gold-daily-weather-demand
+```
+
 Criar Gold dimensional:
 
 ```bash

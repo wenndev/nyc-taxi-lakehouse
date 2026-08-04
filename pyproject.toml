@@ -30,6 +30,7 @@ silver-taxi-zone-lookup = "v2.pipelines.silver.silver_taxi_zone_lookup:main"
 silver-noaa-weather = "v2.pipelines.silver.silver_noaa_weather:main"
 gold-daily-weather-demand = "v2.pipelines.gold.gold_daily_weather_demand:main"
 gold-star-schema = "v2.pipelines.gold.gold_star_schema:main"
+validate-gold-daily-weather-demand = "v2.pipelines.gold.validate_gold_daily_weather_demand:main"
 validate-gold-star-schema = "v2.pipelines.gold.validate_gold_star_schema:main"
 
 [tool.poetry]
