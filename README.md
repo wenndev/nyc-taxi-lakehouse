@@ -31,6 +31,10 @@ Roteiro operacional para recriar a infraestrutura e executar a V2:
 
 [v2/docs/plano_execucao_azure_v2.md](v2/docs/plano_execucao_azure_v2.md)
 
+Dicionario de dados da V2:
+
+[v2/docs/dicionario_dados_v2.md](v2/docs/dicionario_dados_v2.md)
+
 ## Fontes
 
 ### NYC TLC
@@ -347,7 +351,6 @@ Na V2:
 
 ## Proximos Passos
 
-- Criar dicionario de dados.
 - Recriar infraestrutura Azure seguindo `v2/docs/plano_execucao_azure_v2.md`.
 - Executar Silver e Gold completas no Databricks.
 - Enriquecer `dim_localizacao` com taxi zone lookup.

@@ -33,6 +33,12 @@ Referencias praticas de Databricks, Spark e Azure:
 v2/docs/referencias_databricks_spark_azure.md
 ```
 
+Dicionario de dados da V2:
+
+```text
+v2/docs/dicionario_dados_v2.md
+```
+
 Modelagem proposta V2.5:
 
 ```text
