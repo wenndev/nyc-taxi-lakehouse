@@ -11,7 +11,12 @@ from datetime import date
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from v2.config.paths import noaa_silver_dir, nyc_tlc_silver_dir, star_schema_gold_dir
+from v2.config.paths import (
+    noaa_silver_dir,
+    nyc_tlc_silver_dir,
+    star_schema_gold_dir,
+    taxi_zone_lookup_silver_dir,
+)
 from v2.config.spark import create_spark
 from v2.pipelines.gold.weather_consolidation import build_consolidated_daily_weather
 
@@ -29,15 +34,21 @@ def run_gold_star_schema(
     tlc_input_path: str,
     noaa_input_path: str,
     output_path: str,
+    taxi_zone_lookup_input_path: str | None = None,
     year: int = 2025,
     mode: str = "overwrite",
 ) -> GoldStarSchemaTables:
     df_tlc = spark.read.format("delta").load(tlc_input_path)
     df_noaa = spark.read.format("delta").load(noaa_input_path)
+    df_taxi_zone_lookup = (
+        spark.read.format("delta").load(taxi_zone_lookup_input_path)
+        if taxi_zone_lookup_input_path
+        else None
+    )
 
     dim_data = build_dim_data(spark, year)
     dim_clima = build_dim_clima(df_noaa, year)
-    dim_localizacao = build_dim_localizacao(df_tlc)
+    dim_localizacao = build_dim_localizacao(df_tlc, df_taxi_zone_lookup)
     fact_trips = build_fact_trips(
         df_tlc=df_tlc,
         dim_data=dim_data,
@@ -126,14 +137,62 @@ def build_dim_clima(df_noaa: DataFrame, year: int) -> DataFrame:
     )
 
 
-def build_dim_localizacao(df_tlc: DataFrame) -> DataFrame:
-    return (
+def build_dim_localizacao(
+    df_tlc: DataFrame,
+    df_taxi_zone_lookup: DataFrame | None = None,
+) -> DataFrame:
+    used_locations = (
         df_tlc.select(F.col("id_local_partida").alias("location_id"))
         .union(df_tlc.select(F.col("id_local_chegada").alias("location_id")))
         .filter(F.col("location_id").isNotNull())
+        .select(F.col("location_id").cast("int").alias("location_id"))
         .distinct()
+    )
+
+    if df_taxi_zone_lookup is None:
+        return (
+            used_locations.withColumn("localizacao_id", F.col("location_id"))
+            .withColumn("borough", F.lit("desconhecido"))
+            .withColumn("zona", F.lit("desconhecida"))
+            .withColumn("zona_servico", F.lit("desconhecida"))
+            .withColumn("localizacao_sem_lookup", F.lit(True))
+            .select(
+                "localizacao_id",
+                "location_id",
+                "borough",
+                "zona",
+                "zona_servico",
+                "localizacao_sem_lookup",
+            )
+        )
+
+    lookup = df_taxi_zone_lookup.select(
+        F.col("location_id").cast("int").alias("location_id"),
+        "borough",
+        "zona",
+        "zona_servico",
+    ).dropDuplicates(["location_id"])
+    all_locations = used_locations.union(lookup.select("location_id")).distinct()
+
+    return (
+        all_locations.join(lookup, on="location_id", how="left")
         .withColumn("localizacao_id", F.col("location_id").cast("int"))
-        .select("localizacao_id", "location_id")
+        .withColumn("localizacao_sem_lookup", F.col("borough").isNull())
+        .fillna(
+            {
+                "borough": "desconhecido",
+                "zona": "desconhecida",
+                "zona_servico": "desconhecida",
+            }
+        )
+        .select(
+            "localizacao_id",
+            "location_id",
+            "borough",
+            "zona",
+            "zona_servico",
+            "localizacao_sem_lookup",
+        )
     )
 
 
@@ -235,6 +294,7 @@ def main() -> int:
     parser.add_argument("--year", type=int, default=2025)
     parser.add_argument("--tlc-input", default=None)
     parser.add_argument("--noaa-input", default=None)
+    parser.add_argument("--taxi-zone-lookup-input", default=None)
     parser.add_argument("--output", default=None)
     parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])
     parser.add_argument("--dry-run", action="store_true")
@@ -243,10 +303,16 @@ def main() -> int:
 
     tlc_input_path = args.tlc_input if args.tlc_input else str(nyc_tlc_silver_dir(args.year))
     noaa_input_path = args.noaa_input if args.noaa_input else str(noaa_silver_dir(args.year))
+    taxi_zone_lookup_input_path = (
+        args.taxi_zone_lookup_input
+        if args.taxi_zone_lookup_input
+        else str(taxi_zone_lookup_silver_dir())
+    )
     output_path = args.output if args.output else str(star_schema_gold_dir(args.year))
 
     print(f"TLC input : {tlc_input_path}")
     print(f"NOAA input: {noaa_input_path}")
+    print(f"Lookup in : {taxi_zone_lookup_input_path}")
     print(f"Output    : {output_path}")
     print("Format    : silver delta -> gold star schema delta")
     print("Tables    : dim_data, dim_clima, dim_localizacao, fact_trips")
@@ -264,6 +330,11 @@ def main() -> int:
         print("Run first: poetry run silver-noaa-weather")
         return 1
 
+    if not delta_exists(taxi_zone_lookup_input_path):
+        print(f"Taxi Zone Lookup Silver Delta not found: {taxi_zone_lookup_input_path}")
+        print("Run first: poetry run silver-taxi-zone-lookup")
+        return 1
+
     spark = create_spark("GoldStarSchema")
 
     try:
@@ -271,6 +342,7 @@ def main() -> int:
             spark=spark,
             tlc_input_path=tlc_input_path,
             noaa_input_path=noaa_input_path,
+            taxi_zone_lookup_input_path=taxi_zone_lookup_input_path,
             output_path=output_path,
             year=args.year,
             mode=args.mode,

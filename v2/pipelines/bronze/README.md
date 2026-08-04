@@ -42,6 +42,33 @@ Responsabilidade desta etapa:
 
 O tratamento de nulos, filtros, deduplicacao e renomeacao ficam para a Silver.
 
+## Taxi Zone Lookup
+
+Entrada:
+
+```text
+v2/data/raw/nyc_tlc/taxi_zone_lookup/taxi_zone_lookup.csv
+```
+
+Saida:
+
+```text
+v2/data/delta/bronze/nyc_tlc/taxi_zone_lookup
+```
+
+Comando:
+
+```bash
+poetry run bronze-taxi-zone-lookup --dry-run
+poetry run bronze-taxi-zone-lookup
+```
+
+Responsabilidade desta etapa:
+
+- ler o CSV oficial Taxi Zone Lookup;
+- preservar as colunas originais;
+- salvar em Delta.
+
 ## NOAA Weather
 
 Entrada:

@@ -6,6 +6,7 @@ Implementacoes atuais:
 
 - NOAA Weather.
 - NYC TLC Yellow Taxi.
+- NYC TLC Taxi Zone Lookup.
 
 ## Onde Entra
 
@@ -34,6 +35,12 @@ result = validate_noaa_data(
 result = validate_tlc_data(
     df=tlc_renamed_df,
     config=TLCQualityConfig.for_year(2025),
+    pipeline_run_id=run_id,
+)
+
+result = validate_taxi_zone_lookup_data(
+    df=taxi_zone_lookup_df,
+    config=TaxiZoneLookupQualityConfig(),
     pipeline_run_id=run_id,
 )
 ```
@@ -85,6 +92,21 @@ id_local_chegada
 valor_total
 ```
 
+Taxi Zone Lookup recebe a referencia oficial ja padronizada pela Silver:
+
+```text
+1 linha = 1 location_id da NYC TLC
+```
+
+Colunas esperadas:
+
+```text
+location_id
+borough
+zona
+zona_servico
+```
+
 ## Regras Atuais
 
 NOAA:
@@ -121,6 +143,17 @@ NYC TLC:
   `id_vendedor`, `data_hora_partida`, `id_local_partida`, `id_local_chegada`,
   `valor_total`.
 
+Taxi Zone Lookup:
+
+- DataFrame vazio.
+- Colunas esperadas ausentes.
+- Tipos incompativeis.
+- Registros completamente vazios.
+- Nulos ou strings vazias em campos obrigatorios.
+- `location_id` fora do range oficial da TLC.
+- Duplicata por `location_id`.
+- Qualquer regra critica bloqueia a publicacao da Silver Lookup.
+
 ## Saidas Locais
 
 Quarentena:
@@ -128,6 +161,7 @@ Quarentena:
 ```text
 v2/data/delta/quarantine/noaa/ghcnd_nyc/2025
 v2/data/delta/quarantine/nyc_tlc/yellow/2025
+v2/data/delta/quarantine/nyc_tlc/taxi_zone_lookup
 ```
 
 Metricas:
@@ -135,6 +169,7 @@ Metricas:
 ```text
 v2/data/delta/monitoring/quality/noaa/ghcnd_nyc/2025
 v2/data/delta/monitoring/quality/nyc_tlc/yellow/2025
+v2/data/delta/monitoring/quality/nyc_tlc/taxi_zone_lookup
 ```
 
 Esses caminhos sao Delta locais e estao ignorados no Git.
@@ -185,6 +220,7 @@ isolados em quarentena e a qualidade ficou acima do limite minimo de publicacao.
 ```bash
 poetry run python -m unittest tests.v2.pipelines.quality.test_noaa_validator
 poetry run python -m unittest tests.v2.pipelines.quality.test_tlc_validator
+poetry run python -m unittest tests.v2.pipelines.quality.test_taxi_zone_lookup_validator
 poetry run python -m unittest discover tests
 ```
 

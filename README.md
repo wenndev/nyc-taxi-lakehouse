@@ -39,7 +39,7 @@ Dicionario de dados da V2:
 
 ### NYC TLC
 
-Dados publicos de corridas de taxi amarelo.
+Dados publicos de corridas de taxi amarelo e referencia oficial de zonas.
 
 Na V2, o ano usado e 2025. Os arquivos seguem o padrao:
 
@@ -49,6 +49,17 @@ https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-02.parquet
 ...
 https://d37ci6vzurychx.cloudfront.net/trip-data/yellow_tripdata_2025-12.parquet
 ```
+
+O projeto tambem usa o `taxi_zone_lookup.csv` da NYC TLC para enriquecer a
+`dim_localizacao` com borough, zona e zona de servico:
+
+```text
+https://d37ci6vzurychx.cloudfront.net/misc/taxi_zone_lookup.csv
+```
+
+Pagina oficial:
+
+[TLC Trip Record Data](https://www.nyc.gov/site/tlc/about/tlc-trip-record-data.page)
 
 ### NOAA
 
@@ -155,6 +166,12 @@ Baixar NYC TLC 2025:
 poetry run ingest-nyc-tlc
 ```
 
+Baixar Taxi Zone Lookup:
+
+```bash
+poetry run ingest-taxi-zone-lookup
+```
+
 Configurar token NOAA localmente.
 
 Opcao recomendada: criar `.env` a partir do exemplo:
@@ -189,6 +206,7 @@ Criar Bronze:
 
 ```bash
 poetry run bronze-nyc-tlc --skip-count
+poetry run bronze-taxi-zone-lookup --skip-count
 poetry run bronze-noaa-weather --skip-count
 ```
 
@@ -196,15 +214,19 @@ Criar Silver:
 
 ```bash
 poetry run silver-nyc-tlc --skip-count
+poetry run silver-taxi-zone-lookup
 poetry run silver-noaa-weather
 ```
 
-A Silver TLC e a Silver NOAA rodam Data Quality antes da publicacao. Registros
-invalidos ficam em quarentena local e metricas ficam em monitoring:
+A Silver TLC, a Silver Taxi Zone Lookup e a Silver NOAA rodam Data Quality antes
+da publicacao. Registros invalidos ficam em quarentena local e metricas ficam em
+monitoring:
 
 ```text
 v2/data/delta/quarantine/nyc_tlc/yellow/2025
 v2/data/delta/monitoring/quality/nyc_tlc/yellow/2025
+v2/data/delta/quarantine/nyc_tlc/taxi_zone_lookup
+v2/data/delta/monitoring/quality/nyc_tlc/taxi_zone_lookup
 v2/data/delta/quarantine/noaa/ghcnd_nyc/2025
 v2/data/delta/monitoring/quality/noaa/ghcnd_nyc/2025
 ```
@@ -220,7 +242,14 @@ Criar Gold dimensional:
 
 ```bash
 poetry run gold-star-schema \
+  --taxi-zone-lookup-input v2/data/delta/silver/nyc_tlc/taxi_zone_lookup \
   --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
+```
+
+Validar a Gold dimensional:
+
+```bash
+poetry run validate-gold-star-schema
 ```
 
 Visualizar a relacao clima x demanda:
@@ -257,6 +286,7 @@ poetry run gold-daily-weather-demand \
 
 poetry run gold-star-schema \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
+  --taxi-zone-lookup-input v2/data/delta/silver/nyc_tlc/taxi_zone_lookup \
   --output v2/data/delta/dev/gold/star_schema/2025_01 \
   --skip-count
 ```
@@ -311,7 +341,7 @@ Gold Star Schema dev:
 ```text
 dim_data = 365
 dim_clima = 365
-dim_localizacao = 254
+dim_localizacao = 265
 fact_trips = 97065
 fact_trips.clima_id_nulo = 0
 fact_trips.data_id_nulo = 0
@@ -326,13 +356,14 @@ fact_trips.localizacao_chegada_id_nulo = 0
 - Ingestao NYC TLC 2025 automatizada.
 - Ingestao NOAA com paginacao por `offset`.
 - Fluxo V2.5 para varias estacoes NOAA de NYC.
-- Data Quality TLC e NOAA entre Bronze e Silver, com quarentena e metricas.
-- Bronze e Silver em Delta Lake para TLC e NOAA.
+- Data Quality TLC, Taxi Zone Lookup e NOAA entre Bronze e Silver, com quarentena e metricas.
+- Fonte Taxi Zone Lookup com Bronze, Silver e Data Quality proprios.
+- Bronze e Silver em Delta Lake para TLC, Taxi Zone Lookup e NOAA.
 - Silver TLC com colunas temporais, duracao, distancia em km, pagamento, flags e categorias.
 - Silver NOAA com clima diario em uma linha por estacao/data.
 - Gold consolida a NOAA para uma linha de clima NYC por data.
 - Gold diaria usando calendario completo de 2025 como base.
-- Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` e `fact_trips`.
+- Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` enriquecida e `fact_trips`.
 - Wrappers Databricks para Ingestion, Bronze, Silver e Gold.
 
 ## Problemas da V1 Que a V2 Resolve
@@ -353,7 +384,7 @@ Na V2:
 
 - Recriar infraestrutura Azure seguindo `v2/docs/plano_execucao_azure_v2.md`.
 - Executar Silver e Gold completas no Databricks.
-- Enriquecer `dim_localizacao` com taxi zone lookup.
+- Validar a `dim_localizacao` enriquecida na execucao full do Databricks.
 - Criar camada ML usando a Gold diaria.
 - Adicionar CI/CD com GitHub Actions para deploy de notebooks/scripts no Databricks.
 

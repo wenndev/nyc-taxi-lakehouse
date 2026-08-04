@@ -36,6 +36,26 @@ def nyc_tlc_quality_metrics_dir(year: int = 2025) -> Path:
     return MONITORING_ROOT / "quality" / "nyc_tlc" / "yellow" / str(year)
 
 
+def taxi_zone_lookup_raw_dir() -> Path:
+    return RAW_ROOT / "nyc_tlc" / "taxi_zone_lookup"
+
+
+def taxi_zone_lookup_bronze_dir() -> Path:
+    return DELTA_ROOT / "bronze" / "nyc_tlc" / "taxi_zone_lookup"
+
+
+def taxi_zone_lookup_silver_dir() -> Path:
+    return DELTA_ROOT / "silver" / "nyc_tlc" / "taxi_zone_lookup"
+
+
+def taxi_zone_lookup_quarantine_dir() -> Path:
+    return QUARANTINE_ROOT / "nyc_tlc" / "taxi_zone_lookup"
+
+
+def taxi_zone_lookup_quality_metrics_dir() -> Path:
+    return MONITORING_ROOT / "quality" / "nyc_tlc" / "taxi_zone_lookup"
+
+
 def noaa_raw_dir(year: int = 2025, datasetid: str = NOAA_GHCND_NYC_STORAGE_ID) -> Path:
     return RAW_ROOT / "noaa" / datasetid.lower() / str(year)
 

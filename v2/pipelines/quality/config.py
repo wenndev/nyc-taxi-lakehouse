@@ -1,5 +1,5 @@
 # Resumo:
-# - Define as configuracoes de Data Quality para NOAA e TLC.
+# - Define as configuracoes de Data Quality para NOAA, TLC e Taxi Zone Lookup.
 # - Aqui ficam colunas esperadas, limites plausiveis e thresholds PASS/WARNING/FAIL.
 
 from __future__ import annotations
@@ -165,3 +165,50 @@ class TLCQualityConfig:
             pickup_start_date=date(year, 1, 1),
             pickup_end_before_date=date(year + 1, 1, 1),
         )
+
+
+@dataclass(frozen=True)
+class TaxiZoneLookupValueLimits:
+    min_location_id: int = 1
+    max_location_id: int = 265
+
+
+@dataclass(frozen=True)
+class TaxiZoneLookupQualityConfig:
+    dataset_name: str = "nyc_tlc_taxi_zone_lookup"
+    expected_columns: tuple[str, ...] = (
+        "location_id",
+        "borough",
+        "zona",
+        "zona_servico",
+    )
+    required_columns: tuple[str, ...] = (
+        "location_id",
+        "borough",
+        "zona",
+        "zona_servico",
+    )
+    duplicate_key_columns: tuple[str, ...] = ("location_id",)
+    expected_schema: dict[str, str] = field(
+        default_factory=lambda: {
+            "location_id": "integer",
+            "borough": "string",
+            "zona": "string",
+            "zona_servico": "string",
+        }
+    )
+    thresholds: QualityThresholds = field(
+        default_factory=lambda: QualityThresholds(
+            pass_min_percentage=100.0,
+            warning_min_percentage=100.0,
+        )
+    )
+    limits: TaxiZoneLookupValueLimits = field(default_factory=TaxiZoneLookupValueLimits)
+    fail_on_empty: bool = True
+    fail_on_schema_error: bool = True
+    fail_on_unexpected_columns: bool = False
+    critical_rule_codes: tuple[str, ...] = (
+        "NULL_REQUIRED_FIELD",
+        "INVALID_LOCATION_ID",
+        "DUPLICATE_KEY",
+    )

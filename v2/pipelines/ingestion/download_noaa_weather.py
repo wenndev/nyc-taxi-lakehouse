@@ -322,6 +322,12 @@ def download_pages(
         page_number += 1
         time.sleep(sleep_seconds)
 
+    download_complete = is_download_complete(
+        downloaded_results=downloaded_results,
+        expected_count=expected_count,
+    )
+    status = "success" if download_complete else "incomplete"
+
     write_manifest(
         output_dir=output_dir,
         base_params=base_params,
@@ -331,7 +337,16 @@ def download_pages(
         pages=page_number,
         downloaded_results=downloaded_results,
         expected_count=expected_count,
+        status=status,
+        download_complete=download_complete,
     )
+
+    if not download_complete:
+        print(
+            "NOAA download incomplete: "
+            f"downloaded_results={downloaded_results}, expected_count={expected_count}"
+        )
+        return 1
 
     print(f"NOAA raw files ready at: {output_dir}")
     return 0
@@ -364,8 +379,19 @@ def read_json(path: Path) -> dict[str, Any]:
 
 
 def write_json(path: Path, payload: dict[str, Any]) -> None:
-    with path.open("w", encoding="utf-8") as file:
+    temporary_path = path.with_suffix(f"{path.suffix}.part")
+
+    with temporary_path.open("w", encoding="utf-8") as file:
         json.dump(payload, file, ensure_ascii=False, indent=2)
+
+    temporary_path.replace(path)
+
+
+def is_download_complete(downloaded_results: int, expected_count: int | None) -> bool:
+    if expected_count is None:
+        return True
+
+    return downloaded_results == expected_count
 
 
 def write_manifest(
@@ -377,6 +403,8 @@ def write_manifest(
     pages: int,
     downloaded_results: int,
     expected_count: int | None,
+    status: str,
+    download_complete: bool,
 ) -> None:
     manifest = {
         "source": "NOAA CDO API v2",
@@ -388,6 +416,8 @@ def write_manifest(
         "pages": pages,
         "downloaded_results": downloaded_results,
         "expected_count": expected_count,
+        "status": status,
+        "download_complete": download_complete,
     }
     write_json(output_dir / "_manifest.json", manifest)
 

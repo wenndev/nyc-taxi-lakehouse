@@ -9,6 +9,21 @@ poetry run ingest-nyc-tlc --dry-run
 poetry run ingest-nyc-tlc
 ```
 
+## Taxi Zone Lookup
+
+Baixa o CSV oficial pequeno usado para enriquecer a `dim_localizacao`.
+
+```bash
+poetry run ingest-taxi-zone-lookup --dry-run
+poetry run ingest-taxi-zone-lookup
+```
+
+Saida padrao:
+
+```text
+v2/data/raw/nyc_tlc/taxi_zone_lookup/taxi_zone_lookup.csv
+```
+
 ## NOAA
 
 A ingestion NOAA usa a API CDO v2 e salva uma pagina por arquivo JSON.

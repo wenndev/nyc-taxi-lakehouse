@@ -8,9 +8,10 @@ e paginacao fica no Databricks/Python.
 ```text
 ADF Pipeline
   -> Databricks job: ingest NYC TLC
+  -> Databricks job: ingest Taxi Zone Lookup
   -> Databricks job: ingest NOAA com offset
   -> Databricks job: Bronze
-  -> Databricks job: Silver com Data Quality TLC e NOAA
+  -> Databricks job: Silver com Data Quality TLC, Lookup e NOAA
   -> Databricks job: Gold
 ```
 
@@ -42,6 +43,22 @@ year=2025
 start_month=1
 end_month=12
 output=/Volumes/<catalog>/<schema>/<volume>/raw/nyc_tlc/yellow/2025
+overwrite=false
+dry_run=false
+```
+
+## Job Databricks Taxi Zone Lookup
+
+Notebook:
+
+```text
+v2/databricks/notebooks/ingest_taxi_zone_lookup.py
+```
+
+Parametros `baseParameters` no ADF:
+
+```text
+output=/Volumes/<catalog>/<schema>/<volume>/raw/nyc_tlc/taxi_zone_lookup
 overwrite=false
 dry_run=false
 ```
@@ -83,7 +100,11 @@ filesystem. Por isso, para raw ingestion no Databricks, use um caminho de arquiv
 montado ou volume:
 
 ```text
+/Volumes/<catalog>/<schema>/<volume>/raw/nyc_tlc/yellow/2025
+/Volumes/<catalog>/<schema>/<volume>/raw/nyc_tlc/taxi_zone_lookup
 /Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
+/dbfs/mnt/raw/nyc_tlc/yellow/2025
+/dbfs/mnt/raw/nyc_tlc/taxi_zone_lookup
 /dbfs/mnt/raw/noaa/ghcnd_nyc/2025
 ```
 
@@ -144,13 +165,16 @@ dry_run=false
 ## Ordem Recomendada dos Jobs
 
 1. `ingest-nyc-tlc`
-2. `ingest-noaa-weather`
-3. `bronze-nyc-tlc`
-4. `bronze-noaa-weather`
-5. `silver-nyc-tlc` com Data Quality TLC
-6. `silver-noaa-weather` com Data Quality NOAA
-7. `gold-daily-weather-demand`
-8. `gold-star-schema`
+2. `ingest-taxi-zone-lookup`
+3. `ingest-noaa-weather`
+4. `bronze-nyc-tlc`
+5. `bronze-taxi-zone-lookup`
+6. `bronze-noaa-weather`
+7. `silver-nyc-tlc` com Data Quality TLC
+8. `silver-taxi-zone-lookup` com Data Quality Lookup
+9. `silver-noaa-weather` com Data Quality NOAA
+10. `gold-daily-weather-demand`
+11. `gold-star-schema`
 
 ## O Que Ainda Falta Fazer Quando o Azure Voltar
 
@@ -162,7 +186,7 @@ dry_run=false
 - Fazer ADF chamar os jobs Databricks em sequencia.
 - Ajustar parametros de caminhos para apontar para a cloud.
 - Passar `quarantine_output`, `metrics_output` e `pipeline_run_id` para as
-  Silvers TLC e NOAA no Databricks.
+  Silvers TLC, Taxi Zone Lookup e NOAA no Databricks.
 
 Roteiro operacional detalhado:
 

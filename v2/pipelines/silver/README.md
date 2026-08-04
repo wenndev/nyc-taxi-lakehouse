@@ -124,6 +124,42 @@ poetry run silver-nyc-tlc --start-date 2025-01-01 --end-date 2025-02-01 --limit 
 Esse comando processa apenas uma amostra de janeiro de 2025. Use ele primeiro para
 validar a regra da Silver sem forcar a maquina local a processar o ano inteiro.
 
+## Taxi Zone Lookup
+
+Entrada:
+
+```text
+v2/data/delta/bronze/nyc_tlc/taxi_zone_lookup
+```
+
+Saida:
+
+```text
+v2/data/delta/silver/nyc_tlc/taxi_zone_lookup
+```
+
+Ordem de tratamento:
+
+1. Renomear `LocationID`, `Borough`, `Zone` e `service_zone`.
+2. Padronizar strings e cast de `location_id`.
+3. Executar Data Quality.
+4. Enviar registros invalidos para quarentena.
+5. Publicar somente registros validos na Silver.
+
+Saidas de Data Quality:
+
+```text
+v2/data/delta/quarantine/nyc_tlc/taxi_zone_lookup
+v2/data/delta/monitoring/quality/nyc_tlc/taxi_zone_lookup
+```
+
+Comando:
+
+```bash
+poetry run silver-taxi-zone-lookup --dry-run
+poetry run silver-taxi-zone-lookup
+```
+
 ## NOAA Weather
 
 Entrada:

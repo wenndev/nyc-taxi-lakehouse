@@ -60,12 +60,15 @@ v2/
   pipelines/
     ingestion/
       download_nyc_tlc.py
+      download_taxi_zone_lookup.py
       download_noaa_weather.py
     bronze/
       bronze_nyc_tlc.py
+      bronze_taxi_zone_lookup.py
       bronze_noaa_weather.py
     silver/
       silver_nyc_tlc.py
+      silver_taxi_zone_lookup.py
       silver_noaa_weather.py
     quality/
       config.py
@@ -78,10 +81,13 @@ v2/
   databricks/
     notebooks/
       ingest_nyc_tlc.py
+      ingest_taxi_zone_lookup.py
       ingest_noaa_weather.py
       bronze_nyc_tlc.py
+      bronze_taxi_zone_lookup.py
       bronze_noaa_weather.py
       silver_nyc_tlc.py
+      silver_taxi_zone_lookup.py
       silver_noaa_weather.py
       gold_daily_weather_demand.py
       gold_star_schema.py
@@ -97,6 +103,7 @@ v2/
       nyc_tlc/
         yellow/
           2025/
+        taxi_zone_lookup/
       noaa/
         ghcnd_nyc/
           2025/
@@ -128,6 +135,13 @@ Baixar somente janeiro para testar:
 
 ```bash
 poetry run ingest-nyc-tlc --start-month 1 --end-month 1
+```
+
+Baixar Taxi Zone Lookup para enriquecer `dim_localizacao`:
+
+```bash
+poetry run ingest-taxi-zone-lookup --dry-run
+poetry run ingest-taxi-zone-lookup
 ```
 
 Baixar clima da NOAA para 2025 usando varias estacoes de NYC. A regra de
@@ -170,6 +184,13 @@ poetry run bronze-nyc-tlc --dry-run
 poetry run bronze-nyc-tlc
 ```
 
+Criar Bronze Taxi Zone Lookup:
+
+```bash
+poetry run bronze-taxi-zone-lookup --dry-run
+poetry run bronze-taxi-zone-lookup
+```
+
 Criar Bronze NOAA:
 
 ```bash
@@ -196,6 +217,21 @@ monitoring:
 ```text
 v2/data/delta/quarantine/nyc_tlc/yellow/2025
 v2/data/delta/monitoring/quality/nyc_tlc/yellow/2025
+```
+
+Criar Silver Taxi Zone Lookup:
+
+```bash
+poetry run silver-taxi-zone-lookup --dry-run
+poetry run silver-taxi-zone-lookup
+```
+
+A Silver Taxi Zone Lookup tambem roda Data Quality. Essa fonte enriquece a
+`dim_localizacao` com borough, zona e zona de servico:
+
+```text
+v2/data/delta/quarantine/nyc_tlc/taxi_zone_lookup
+v2/data/delta/monitoring/quality/nyc_tlc/taxi_zone_lookup
 ```
 
 Criar Silver NOAA:
@@ -229,7 +265,15 @@ Criar Gold dimensional:
 ```bash
 poetry run gold-star-schema --dry-run
 poetry run gold-star-schema \
+  --taxi-zone-lookup-input v2/data/delta/silver/nyc_tlc/taxi_zone_lookup \
   --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
+```
+
+Validar a Gold dimensional:
+
+```bash
+poetry run validate-gold-star-schema --dry-run
+poetry run validate-gold-star-schema
 ```
 
 Teste local leve com amostra da TLC:
@@ -243,6 +287,11 @@ poetry run gold-star-schema \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
   --output v2/data/delta/dev/gold/star_schema/2025_01 \
   --skip-count
+
+poetry run validate-gold-star-schema \
+  --input v2/data/delta/dev/gold/star_schema/2025_01 \
+  --expected-locations 265 \
+  --min-fact-rows 1
 ```
 
 Resultado esperado para o ano completo:
@@ -299,7 +348,7 @@ Gold Star Schema dev:
 ```text
 dim_data = 365
 dim_clima = 365
-dim_localizacao = 254
+dim_localizacao = 265
 fact_trips = 97065
 fact_trips.clima_id_nulo = 0
 ```
@@ -309,9 +358,10 @@ fact_trips.clima_id_nulo = 0
 - Paginacao da API NOAA com `offset`.
 - Desenho V2.5 para clima NYC consolidado usando varias estacoes NOAA.
 - Data Quality modular para NOAA e NYC TLC entre Bronze e Silver.
+- Taxi Zone Lookup com Bronze, Silver e Data Quality para enriquecer `dim_localizacao`.
 - Silver TLC com colunas temporais, duracao, passageiros, pagamento e flags.
 - Gold diaria usando calendario completo para evitar perda de dias no join.
-- Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` e `fact_trips`.
+- Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` enriquecida e `fact_trips`.
 
 ## Visualizacao com Jupyter
 

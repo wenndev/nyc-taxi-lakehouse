@@ -32,6 +32,7 @@ Raw nao e tabela analitica. E a area onde ficam os arquivos originais.
 | Fonte | Caminho local | Formato | Descricao |
 |---|---|---|---|
 | NYC TLC Yellow Taxi | `v2/data/raw/nyc_tlc/yellow/2025` | Parquet | Arquivos mensais de corridas de taxi amarelo em 2025. |
+| NYC TLC Taxi Zone Lookup | `v2/data/raw/nyc_tlc/taxi_zone_lookup/taxi_zone_lookup.csv` | CSV | Referencia oficial de zonas da NYC TLC. |
 | NOAA GHCND NYC | `v2/data/raw/noaa/ghcnd_nyc/2025` | JSON | Paginas da API NOAA baixadas com paginacao por offset. |
 
 ## Bronze NYC TLC
@@ -74,6 +75,31 @@ Principais colunas de entrada:
 | `congestion_surcharge` | double | Sobretaxa de congestionamento. |
 | `Airport_fee` | double | Taxa de aeroporto. |
 | `cbd_congestion_fee` | double | Taxa de congestionamento CBD. |
+
+## Bronze Taxi Zone Lookup
+
+Tabela Delta criada a partir do CSV oficial de zonas da NYC TLC.
+
+Grao:
+
+```text
+1 linha = 1 location_id oficial da NYC TLC
+```
+
+Regra principal:
+
+```text
+Preservar a referencia original. Padronizacao e Data Quality entram na Silver.
+```
+
+Colunas de entrada:
+
+| Coluna original | Tipo logico | Descricao |
+|---|---:|---|
+| `LocationID` | integer | ID oficial da zona TLC. |
+| `Borough` | string | Borough da zona. |
+| `Zone` | string | Nome da zona. |
+| `service_zone` | string | Zona de servico usada pela TLC. |
 
 ## Bronze NOAA
 
@@ -165,6 +191,31 @@ Regras principais:
 | `viagem_valor_alto` | boolean | Indica valor total muito alto. | `valor_total > 500`. |
 | `velocidade_media_alta` | boolean | Indica velocidade media alta. | `velocidade_media_kmh > 120`. |
 | `registro_suspeito` | boolean | Consolidado de flags suspeitas. | `true` se qualquer flag suspeita for verdadeira. |
+
+## Silver Taxi Zone Lookup
+
+Tabela tratada da referencia oficial de zonas da NYC TLC.
+
+Grao:
+
+```text
+1 linha = 1 location_id valido
+```
+
+Regras principais:
+
+- Colunas sao renomeadas para nomes padronizados.
+- Strings sao aparadas com `trim`.
+- `location_id` e convertido para inteiro.
+- Data Quality bloqueia a publicacao se houver duplicidade, nulos ou ID fora do range.
+- Essa tabela alimenta a `dim_localizacao` da Gold.
+
+| Coluna | Tipo logico | Descricao | Origem/regra |
+|---|---:|---|---|
+| `location_id` | integer | ID oficial da zona TLC. | `LocationID`. |
+| `borough` | string | Borough da zona. | `Borough`. |
+| `zona` | string | Nome da zona. | `Zone`. |
+| `zona_servico` | string | Zona de servico. | `service_zone`. |
 
 ## Silver NOAA
 
@@ -272,25 +323,22 @@ Isso evita duplicar corridas.
 
 ## Gold: `dim_localizacao`
 
-Dimensao de localizacao baseada nos IDs da NYC TLC.
+Dimensao de localizacao enriquecida com o Taxi Zone Lookup oficial da NYC TLC.
 
 Grao:
 
 ```text
-1 linha = 1 location_id usado em partida ou chegada
+1 linha = 1 location_id da NYC TLC
 ```
 
 | Coluna | Tipo logico | Descricao |
 |---|---:|---|
 | `localizacao_id` | integer | Chave da dimensao, igual ao `location_id`. |
 | `location_id` | integer | ID da zona TLC. |
-
-Observacao:
-
-```text
-A dimensao ainda nao esta enriquecida com borough, zona e zona_servico.
-Isso pode ser feito depois usando o Taxi Zone Lookup.
-```
+| `borough` | string | Borough da zona. Ex: `Manhattan`, `Queens`, `Brooklyn`. |
+| `zona` | string | Nome da zona TLC. Ex: `Midtown Center`. |
+| `zona_servico` | string | Zona de servico. Ex: `Yellow Zone`, `Boro Zone`, `EWR`. |
+| `localizacao_sem_lookup` | boolean | Indica que o ID apareceu na TLC, mas nao foi encontrado no lookup. |
 
 ## Gold: `fact_trips`
 
@@ -454,4 +502,3 @@ Na pratica:
 - `PASS`: pode seguir.
 - `WARNING`: pode seguir, mas precisa olhar a quarantine.
 - `FAIL`: a Silver nao deve ser publicada.
-

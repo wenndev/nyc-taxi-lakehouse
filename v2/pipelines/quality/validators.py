@@ -1,5 +1,5 @@
 # Resumo:
-# - Contem as regras Spark de Data Quality para NOAA e TLC.
+# - Contem as regras Spark de Data Quality para NOAA, TLC e Taxi Zone Lookup.
 # - Cada validador recebe um DataFrame e devolve validos, invalidos, metricas e status.
 
 from __future__ import annotations
@@ -10,7 +10,11 @@ from pyspark.sql import DataFrame
 from pyspark.sql import functions as F
 from pyspark.sql import types as T
 
-from v2.pipelines.quality.config import NOAAQualityConfig, TLCQualityConfig
+from v2.pipelines.quality.config import (
+    NOAAQualityConfig,
+    TLCQualityConfig,
+    TaxiZoneLookupQualityConfig,
+)
 from v2.pipelines.quality.models import (
     DataQualityResult,
     QualityMetrics,
@@ -22,7 +26,7 @@ from v2.pipelines.quality.models import (
 TEMP_DUPLICATE_COUNT_COLUMN = "_dq_duplicate_count"
 TEMP_FAILED_RULES_COLUMN = "_dq_failed_rules"
 
-QualityConfig = NOAAQualityConfig | TLCQualityConfig
+QualityConfig = NOAAQualityConfig | TLCQualityConfig | TaxiZoneLookupQualityConfig
 
 
 def validate_noaa_data(
@@ -114,6 +118,67 @@ def validate_tlc_data(
     with_rules = add_tlc_failed_rules(with_duplicate_markers, resolved_config)
 
     metrics = build_tlc_metrics(
+        df=with_rules,
+        config=resolved_config,
+        pipeline_run_id=resolved_run_id,
+        schema_validation=schema_validation,
+    )
+
+    invalid_records = add_audit_columns(
+        df=with_rules.filter(F.size(F.col(TEMP_FAILED_RULES_COLUMN)) > 0).drop(
+            TEMP_DUPLICATE_COUNT_COLUMN
+        ),
+        config=resolved_config,
+        pipeline_run_id=resolved_run_id,
+    )
+    valid_records = with_rules.filter(F.size(F.col(TEMP_FAILED_RULES_COLUMN)) == 0).drop(
+        TEMP_DUPLICATE_COUNT_COLUMN,
+        TEMP_FAILED_RULES_COLUMN,
+    )
+
+    return DataQualityResult(
+        valid_records=valid_records,
+        invalid_records=invalid_records,
+        metrics=metrics,
+        status=metrics.pipeline_status,
+        pipeline_run_id=resolved_run_id,
+        dataset_name=resolved_config.dataset_name,
+        schema_validation=schema_validation,
+    )
+
+
+def validate_taxi_zone_lookup_data(
+    df: DataFrame,
+    config: TaxiZoneLookupQualityConfig | None = None,
+    pipeline_run_id: str | None = None,
+) -> DataQualityResult:
+    """Validate NYC TLC Taxi Zone Lookup before Silver publication.
+
+    Expected input grain: one row per taxi zone location_id.
+    """
+
+    resolved_config = config or TaxiZoneLookupQualityConfig()
+    resolved_run_id = pipeline_run_id or str(uuid4())
+    schema_validation = validate_schema(df, resolved_config)
+
+    if has_critical_schema_error(schema_validation, resolved_config):
+        return build_structural_failure_result(
+            df=df,
+            config=resolved_config,
+            pipeline_run_id=resolved_run_id,
+            schema_validation=schema_validation,
+        )
+
+    with_duplicate_markers = add_duplicate_marker(
+        df=df,
+        key_columns=resolved_config.duplicate_key_columns,
+    )
+    with_rules = add_taxi_zone_lookup_failed_rules(
+        with_duplicate_markers,
+        resolved_config,
+    )
+
+    metrics = build_taxi_zone_lookup_metrics(
         df=with_rules,
         config=resolved_config,
         pipeline_run_id=resolved_run_id,
@@ -319,6 +384,26 @@ def add_tlc_failed_rules(df: DataFrame, config: TLCQualityConfig) -> DataFrame:
     )
 
 
+def add_taxi_zone_lookup_failed_rules(
+    df: DataFrame,
+    config: TaxiZoneLookupQualityConfig,
+) -> DataFrame:
+    failed_rules = F.array(
+        F.when(is_empty_record(config.expected_columns), F.lit("EMPTY_RECORD")),
+        F.when(
+            has_null_required_field(config.required_columns),
+            F.lit("NULL_REQUIRED_FIELD"),
+        ),
+        F.when(is_invalid_lookup_location(config), F.lit("INVALID_LOCATION_ID")),
+        F.when(F.col(TEMP_DUPLICATE_COUNT_COLUMN) > 1, F.lit("DUPLICATE_KEY")),
+    )
+
+    return df.withColumn(
+        TEMP_FAILED_RULES_COLUMN,
+        F.filter(failed_rules, lambda rule_code: rule_code.isNotNull()),
+    )
+
+
 def is_empty_record(columns: tuple[str, ...]):
     condition = F.lit(True)
 
@@ -333,7 +418,14 @@ def has_null_required_field(required_columns: tuple[str, ...]):
 
     for column_name in required_columns:
         column = F.col(column_name)
-        if column_name in {"id_estacao", "tipo_dado"}:
+        required_text_columns = {
+            "id_estacao",
+            "tipo_dado",
+            "borough",
+            "zona",
+            "zona_servico",
+        }
+        if column_name in required_text_columns:
             condition = condition | column.isNull() | (F.trim(column) == "")
         else:
             condition = condition | column.isNull()
@@ -489,6 +581,20 @@ def is_tlc_value_out_of_range(config: TLCQualityConfig):
     )
 
 
+def is_invalid_lookup_location(config: TaxiZoneLookupQualityConfig):
+    limits = config.limits
+    location_id = F.col("location_id")
+
+    return F.coalesce(
+        location_id.isNotNull()
+        & (
+            (location_id < limits.min_location_id)
+            | (location_id > limits.max_location_id)
+        ),
+        F.lit(False),
+    )
+
+
 def build_noaa_metrics(
     df: DataFrame,
     config: NOAAQualityConfig,
@@ -562,6 +668,59 @@ def build_tlc_metrics(
         F.sum(rule_hit("NULL_REQUIRED_FIELD").cast("long")).alias("null_error_count"),
         F.sum(tlc_range_rule_hit().cast("long")).alias("range_error_count"),
         F.sum(rule_hit("FUTURE_DATE").cast("long")).alias("future_date_count"),
+        F.sum(critical_rule_hit(config).cast("long")).alias("critical_rule_count"),
+    ).collect()[0]
+
+    total_records = aggregated["total_records"] or 0
+    valid_records = aggregated["valid_records"] or 0
+    invalid_records = aggregated["invalid_records"] or 0
+    quality_percentage = calculate_quality_percentage(valid_records, total_records)
+    status = determine_status(
+        quality_percentage=quality_percentage,
+        schema_validation=schema_validation,
+        config=config,
+        has_critical_rule=(aggregated["critical_rule_count"] or 0) > 0,
+        total_records=total_records,
+    )
+
+    return QualityMetrics(
+        pipeline_run_id=pipeline_run_id,
+        dataset_name=config.dataset_name,
+        execution_timestamp=utc_now(),
+        total_records=total_records,
+        valid_records=valid_records,
+        invalid_records=invalid_records,
+        quality_percentage=quality_percentage,
+        duplicate_count=aggregated["duplicate_count"] or 0,
+        null_error_count=aggregated["null_error_count"] or 0,
+        schema_error_count=len(schema_validation.critical_rule_codes),
+        range_error_count=aggregated["range_error_count"] or 0,
+        future_date_count=aggregated["future_date_count"] or 0,
+        pipeline_status=status,
+        missing_columns=schema_validation.missing_columns,
+        unexpected_columns=schema_validation.unexpected_columns,
+        incompatible_types=schema_validation.incompatible_types,
+    )
+
+
+def build_taxi_zone_lookup_metrics(
+    df: DataFrame,
+    config: TaxiZoneLookupQualityConfig,
+    pipeline_run_id: str,
+    schema_validation: SchemaValidationResult,
+) -> QualityMetrics:
+    aggregated = df.agg(
+        F.count("*").alias("total_records"),
+        F.sum((F.size(F.col(TEMP_FAILED_RULES_COLUMN)) == 0).cast("long")).alias(
+            "valid_records"
+        ),
+        F.sum((F.size(F.col(TEMP_FAILED_RULES_COLUMN)) > 0).cast("long")).alias(
+            "invalid_records"
+        ),
+        F.sum(rule_hit("DUPLICATE_KEY").cast("long")).alias("duplicate_count"),
+        F.sum(rule_hit("NULL_REQUIRED_FIELD").cast("long")).alias("null_error_count"),
+        F.sum(rule_hit("INVALID_LOCATION_ID").cast("long")).alias("range_error_count"),
+        F.sum(F.lit(0).cast("long")).alias("future_date_count"),
         F.sum(critical_rule_hit(config).cast("long")).alias("critical_rule_count"),
     ).collect()[0]
 

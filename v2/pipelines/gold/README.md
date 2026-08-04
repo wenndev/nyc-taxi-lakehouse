@@ -62,6 +62,7 @@ Entrada:
 ```text
 v2/data/delta/silver/nyc_tlc/yellow/2025
 v2/data/delta/silver/noaa/ghcnd_nyc/2025
+v2/data/delta/silver/nyc_tlc/taxi_zone_lookup
 ```
 
 Saida:
@@ -74,18 +75,44 @@ Comando:
 
 ```bash
 poetry run gold-star-schema --dry-run
-poetry run gold-star-schema
+poetry run gold-star-schema \
+  --taxi-zone-lookup-input v2/data/delta/silver/nyc_tlc/taxi_zone_lookup
 ```
+
+Validacao automatica depois da Gold:
+
+```bash
+poetry run validate-gold-star-schema --dry-run
+poetry run validate-gold-star-schema
+```
+
+Esse check falha se encontrar:
+
+- `dim_data` ou `dim_clima` diferente de 365 linhas para 2025;
+- `dim_localizacao` diferente de 265 zonas oficiais;
+- chaves duplicadas nas dimensoes;
+- FKs nulas ou orfas na `fact_trips`;
+- dias com clima incompleto na `dim_clima`.
 
 Teste local com amostra da TLC:
 
 ```bash
 poetry run gold-star-schema \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
+  --taxi-zone-lookup-input v2/data/delta/silver/nyc_tlc/taxi_zone_lookup \
   --output v2/data/delta/dev/gold/star_schema/2025_01
 ```
 
-Na V2, a `fact_trips` inclui colunas que faltavam na V1:
+Na V2, a `dim_localizacao` usa o Taxi Zone Lookup oficial para trazer:
+
+```text
+borough
+zona
+zona_servico
+localizacao_sem_lookup
+```
+
+A `fact_trips` inclui colunas que faltavam na V1:
 
 ```text
 data_hora_partida

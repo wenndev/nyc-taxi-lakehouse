@@ -454,16 +454,16 @@ O que deve ser reaproveitado:
 - funcoes PySpark de Bronze, Silver e Gold;
 - regras de limpeza;
 - paginacao NOAA;
+- referencia Taxi Zone Lookup para enriquecer `dim_localizacao`;
 - logica de calendario completo;
 - logica de alinhamento por data.
 
 ## Pendencias
 
-- Criar dicionario de dados.
 - Criar notebook de inspecao para NOAA.
 - Executar Silver TLC completa no Databricks.
 - Executar Gold completa no Databricks.
-- Enriquecer `dim_localizacao` com taxi zone lookup.
+- Validar `dim_localizacao` enriquecida com Taxi Zone Lookup na Gold completa.
 - Planejar dataset analitico para ML.
 - Planejar pipelines incrementais.
 - Planejar particionamento Bronze.

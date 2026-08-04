@@ -64,6 +64,7 @@ from v2.pipelines.gold.gold_star_schema import run_gold_star_schema  # noqa: E40
 dbutils.widgets.text("year", "2025")
 dbutils.widgets.text("tlc_input", "")
 dbutils.widgets.text("noaa_input", "")
+dbutils.widgets.text("taxi_zone_lookup_input", "")
 dbutils.widgets.text("output", "")
 dbutils.widgets.text("mode", "overwrite")
 dbutils.widgets.text("skip_count", "true")
@@ -88,6 +89,7 @@ def bool_widget(name: str) -> bool:
 year = int(widget("year"))
 tlc_input_path = optional_widget("tlc_input")
 noaa_input_path = optional_widget("noaa_input")
+taxi_zone_lookup_input_path = optional_widget("taxi_zone_lookup_input")
 output_path = optional_widget("output")
 mode = widget("mode")
 skip_count = bool_widget("skip_count")
@@ -99,11 +101,15 @@ if not tlc_input_path:
 if not noaa_input_path:
     raise ValueError("Parameter 'noaa_input' is required.")
 
+if not taxi_zone_lookup_input_path:
+    raise ValueError("Parameter 'taxi_zone_lookup_input' is required.")
+
 if not output_path:
     raise ValueError("Parameter 'output' is required.")
 
 print(f"TLC input : {tlc_input_path}")
 print(f"NOAA input: {noaa_input_path}")
+print(f"Lookup in : {taxi_zone_lookup_input_path}")
 print(f"Output    : {output_path}")
 print(f"Year      : {year}")
 print("Format    : silver delta -> gold star schema delta")
@@ -116,6 +122,7 @@ if dry_run:
                 "status": "dry_run",
                 "tlc_input": tlc_input_path,
                 "noaa_input": noaa_input_path,
+                "taxi_zone_lookup_input": taxi_zone_lookup_input_path,
                 "output": output_path,
                 "year": year,
             }
@@ -126,6 +133,7 @@ tables = run_gold_star_schema(
     spark=spark,
     tlc_input_path=tlc_input_path,
     noaa_input_path=noaa_input_path,
+    taxi_zone_lookup_input_path=taxi_zone_lookup_input_path,
     output_path=output_path,
     year=year,
     mode=mode,
@@ -152,6 +160,7 @@ dbutils.notebook.exit(
             "status": "success",
             "tlc_input": tlc_input_path,
             "noaa_input": noaa_input_path,
+            "taxi_zone_lookup_input": taxi_zone_lookup_input_path,
             "output": output_path,
             "year": year,
             "rows": rows,

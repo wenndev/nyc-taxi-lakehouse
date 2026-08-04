@@ -149,12 +149,11 @@ Se a tabela for managed table com liquid clustering, nao usar `ZORDER`.
 Melhorias que fazem sentido antes ou durante a ida para cloud:
 
 ```text
-1. Enriquecer dim_localizacao com taxi zone lookup.
-2. Criar dicionario de dados.
-3. Criar notebook de validacao NOAA.
-4. Criar notebook de validacao Gold full.
-5. Criar script/notebook de manutencao Delta para Databricks.
-6. Depois da execucao full, decidir entre predictive optimization, liquid clustering ou OPTIMIZE/ZORDER.
+1. Validar dim_localizacao enriquecida com Taxi Zone Lookup na Gold full.
+2. Criar notebook de validacao NOAA.
+3. Criar notebook de validacao Gold full.
+4. Criar script/notebook de manutencao Delta para Databricks.
+5. Depois da execucao full, decidir entre predictive optimization, liquid clustering ou OPTIMIZE/ZORDER.
 ```
 
 ## Fontes Oficiais Consultadas

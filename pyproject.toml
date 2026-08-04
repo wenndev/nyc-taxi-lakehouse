@@ -20,13 +20,17 @@ dev = [
 
 [project.scripts]
 ingest-nyc-tlc = "v2.pipelines.ingestion.download_nyc_tlc:main"
+ingest-taxi-zone-lookup = "v2.pipelines.ingestion.download_taxi_zone_lookup:main"
 ingest-noaa-weather = "v2.pipelines.ingestion.download_noaa_weather:main"
 bronze-nyc-tlc = "v2.pipelines.bronze.bronze_nyc_tlc:main"
-silver-nyc-tlc = "v2.pipelines.silver.silver_nyc_tlc:main"
+bronze-taxi-zone-lookup = "v2.pipelines.bronze.bronze_taxi_zone_lookup:main"
 bronze-noaa-weather = "v2.pipelines.bronze.bronze_noaa_weather:main"
+silver-nyc-tlc = "v2.pipelines.silver.silver_nyc_tlc:main"
+silver-taxi-zone-lookup = "v2.pipelines.silver.silver_taxi_zone_lookup:main"
 silver-noaa-weather = "v2.pipelines.silver.silver_noaa_weather:main"
 gold-daily-weather-demand = "v2.pipelines.gold.gold_daily_weather_demand:main"
 gold-star-schema = "v2.pipelines.gold.gold_star_schema:main"
+validate-gold-star-schema = "v2.pipelines.gold.validate_gold_star_schema:main"
 
 [tool.poetry]
 packages = [
