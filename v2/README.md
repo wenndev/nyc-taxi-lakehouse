@@ -61,6 +61,11 @@ v2/
     silver/
       silver_nyc_tlc.py
       silver_noaa_weather.py
+    quality/
+      config.py
+      models.py
+      validators.py
+      storage.py
     gold/
       gold_daily_weather_demand.py
       gold_star_schema.py
@@ -93,6 +98,8 @@ v2/
       bronze/
       silver/
       gold/
+      quarantine/
+      monitoring/
 ```
 
 ## Ingestion
@@ -181,6 +188,14 @@ Criar Silver NOAA:
 ```bash
 poetry run silver-noaa-weather --dry-run
 poetry run silver-noaa-weather
+```
+
+A Silver NOAA executa Data Quality antes de publicar os dados tratados. Registros
+invalidos vao para quarentena e metricas vao para monitoring:
+
+```text
+v2/data/delta/quarantine/noaa/ghcnd_nyc/2025
+v2/data/delta/monitoring/quality/noaa/ghcnd_nyc/2025
 ```
 
 ## Gold
@@ -278,6 +293,7 @@ fact_trips.clima_id_nulo = 0
 
 - Paginacao da API NOAA com `offset`.
 - Desenho V2.5 para clima NYC consolidado usando varias estacoes NOAA.
+- Data Quality modular para NOAA entre Bronze e Silver.
 - Silver TLC com colunas temporais, duracao, passageiros, pagamento e flags.
 - Gold diaria usando calendario completo para evitar perda de dias no join.
 - Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` e `fact_trips`.

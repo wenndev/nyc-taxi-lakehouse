@@ -10,7 +10,7 @@ ADF Pipeline
   -> Databricks job: ingest NYC TLC
   -> Databricks job: ingest NOAA com offset
   -> Databricks job: Bronze
-  -> Databricks job: Silver
+  -> Databricks job: Silver com Data Quality NOAA
   -> Databricks job: Gold
 ```
 
@@ -148,7 +148,7 @@ dry_run=false
 3. `bronze-nyc-tlc`
 4. `bronze-noaa-weather`
 5. `silver-nyc-tlc`
-6. `silver-noaa-weather`
+6. `silver-noaa-weather` com Data Quality NOAA
 7. `gold-daily-weather-demand`
 8. `gold-star-schema`
 
@@ -161,6 +161,8 @@ dry_run=false
 - Criar cluster/job Databricks.
 - Fazer ADF chamar os jobs Databricks em sequencia.
 - Ajustar parametros de caminhos para apontar para a cloud.
+- Passar `quarantine_output`, `metrics_output` e `pipeline_run_id` para a Silver
+  NOAA no Databricks.
 
 Roteiro operacional detalhado:
 

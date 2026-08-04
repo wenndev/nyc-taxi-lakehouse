@@ -8,6 +8,8 @@ V2_ROOT = Path(__file__).resolve().parents[1]
 RAW_ROOT = V2_ROOT / "data" / "raw"
 DELTA_ROOT = V2_ROOT / "data" / "delta"
 GOLD_ROOT = DELTA_ROOT / "gold"
+QUARANTINE_ROOT = DELTA_ROOT / "quarantine"
+MONITORING_ROOT = DELTA_ROOT / "monitoring"
 
 
 def nyc_tlc_raw_dir(year: int = 2025) -> Path:
@@ -32,6 +34,20 @@ def noaa_bronze_dir(year: int = 2025, datasetid: str = NOAA_GHCND_NYC_STORAGE_ID
 
 def noaa_silver_dir(year: int = 2025, datasetid: str = NOAA_GHCND_NYC_STORAGE_ID) -> Path:
     return DELTA_ROOT / "silver" / "noaa" / datasetid.lower() / str(year)
+
+
+def noaa_quarantine_dir(
+    year: int = 2025,
+    datasetid: str = NOAA_GHCND_NYC_STORAGE_ID,
+) -> Path:
+    return QUARANTINE_ROOT / "noaa" / datasetid.lower() / str(year)
+
+
+def noaa_quality_metrics_dir(
+    year: int = 2025,
+    datasetid: str = NOAA_GHCND_NYC_STORAGE_ID,
+) -> Path:
+    return MONITORING_ROOT / "quality" / "noaa" / datasetid.lower() / str(year)
 
 
 def daily_weather_demand_gold_dir(year: int = 2025) -> Path:

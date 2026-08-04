@@ -86,6 +86,8 @@ Opcao recomendada para os downloaders Python no Databricks:
 /Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/gold/star_schema/2025
+/Volumes/<catalog>/<schema>/<volume>/delta/quarantine/noaa/ghcnd_nyc/2025
+/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/noaa/ghcnd_nyc/2025
 ```
 
 Alternativa:
@@ -138,7 +140,7 @@ Ordem recomendada no ADF:
 3. bronze_nyc_tlc
 4. bronze_noaa_weather
 5. silver_nyc_tlc
-6. silver_noaa_weather
+6. silver_noaa_weather com Data Quality NOAA
 7. gold_daily_weather_demand
 8. gold_star_schema
 ```
@@ -244,6 +246,10 @@ year=2025
 datasetid=GHCND_NYC
 input=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
+quarantine_output=/Volumes/<catalog>/<schema>/<volume>/delta/quarantine/noaa/ghcnd_nyc/2025
+metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/noaa/ghcnd_nyc/2025
+pipeline_run_id=<adf_pipeline_run_id>
+skip_quality=false
 mode=overwrite
 skip_count=false
 dry_run=false
@@ -290,6 +296,8 @@ Validar Silver NOAA:
 dias_distintos == 365
 linhas > 365 quando houver varias estacoes
 qtd_estacoes > 1
+quality.pipeline_status == PASS ou WARNING
+quality.invalid_records revisado quando maior que 0
 ```
 
 Validar Gold diaria:
@@ -330,6 +338,8 @@ chaves_orfas == 0
 - A Silver TLC completa e a Gold Star completa podem ser pesadas localmente.
 - No Databricks, usar cluster com memoria suficiente para a TLC 2025 completa.
 - `skip_count=true` evita disparar contagens caras durante processamento pesado.
+- A Silver NOAA ja executa Data Quality; em caso de `FAIL`, a Silver nao deve ser
+  publicada.
 - A V2 ainda nao implementa pipeline incremental; atualmente o padrao e
   `overwrite`.
 - `OPTIMIZE` e `ZORDER` devem ser aplicados depois da primeira execucao full,

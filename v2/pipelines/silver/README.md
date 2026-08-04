@@ -125,15 +125,31 @@ Ordem de tratamento:
 
 1. Explodir o array `results` vindo da API NOAA.
 2. Padronizar campos para `data_clima`, `id_estacao`, `tipo_dado` e `valor`.
-3. Remover registros sem campos obrigatorios.
-4. Gerar uma linha diaria por estacao.
-5. Criar colunas de chuva, temperatura, neve e flags para analise.
+3. Executar Data Quality no grao observacao NOAA.
+4. Enviar registros invalidos para quarentena.
+5. Enviar metricas para monitoring.
+6. Publicar somente registros validos na Silver.
+7. Gerar uma linha diaria por estacao.
+8. Criar colunas de chuva, temperatura, neve e flags para analise.
+
+Saidas de Data Quality:
+
+```text
+v2/data/delta/quarantine/noaa/ghcnd_nyc/2025
+v2/data/delta/monitoring/quality/noaa/ghcnd_nyc/2025
+```
 
 Comando:
 
 ```bash
 poetry run silver-noaa-weather --dry-run
 poetry run silver-noaa-weather
+```
+
+Desativar Data Quality apenas para debug:
+
+```bash
+poetry run silver-noaa-weather --skip-quality
 ```
 
 Teste ainda mais leve, criando uma Bronze de amostra antes:

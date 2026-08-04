@@ -182,6 +182,10 @@ year
 datasetid
 input
 output
+quarantine_output
+metrics_output
+pipeline_run_id
+skip_quality
 mode
 skip_count
 dry_run
@@ -192,7 +196,13 @@ Exemplo:
 ```text
 input=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
+quarantine_output=/Volumes/<catalog>/<schema>/<volume>/delta/quarantine/noaa/ghcnd_nyc/2025
+metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/noaa/ghcnd_nyc/2025
+skip_quality=false
 ```
+
+Se o Data Quality retornar `FAIL`, a Silver NOAA nao e publicada e o job deve
+falhar de forma controlada.
 
 ### Gold Daily Weather Demand
 

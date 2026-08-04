@@ -58,9 +58,13 @@ from v2.pipelines.silver.silver_noaa_weather import run_silver_noaa_weather  # n
 # COMMAND ----------
 
 dbutils.widgets.text("year", "2025")
-dbutils.widgets.text("datasetid", "GHCND")
+dbutils.widgets.text("datasetid", "GHCND_NYC")
 dbutils.widgets.text("input", "")
 dbutils.widgets.text("output", "")
+dbutils.widgets.text("quarantine_output", "")
+dbutils.widgets.text("metrics_output", "")
+dbutils.widgets.text("pipeline_run_id", "")
+dbutils.widgets.text("skip_quality", "false")
 dbutils.widgets.text("mode", "overwrite")
 dbutils.widgets.text("skip_count", "true")
 dbutils.widgets.text("dry_run", "false")
@@ -85,6 +89,10 @@ year = int(widget("year"))
 datasetid = widget("datasetid")
 input_path = optional_widget("input")
 output_path = optional_widget("output")
+quarantine_path = optional_widget("quarantine_output")
+metrics_path = optional_widget("metrics_output")
+pipeline_run_id = optional_widget("pipeline_run_id")
+skip_quality = bool_widget("skip_quality")
 mode = widget("mode")
 skip_count = bool_widget("skip_count")
 dry_run = bool_widget("dry_run")
@@ -95,8 +103,16 @@ if not input_path:
 if not output_path:
     raise ValueError("Parameter 'output' is required.")
 
+if not skip_quality and not quarantine_path:
+    raise ValueError("Parameter 'quarantine_output' is required when quality is enabled.")
+
+if not skip_quality and not metrics_path:
+    raise ValueError("Parameter 'metrics_output' is required when quality is enabled.")
+
 print(f"Input : {input_path}")
 print(f"Output: {output_path}")
+print(f"Quarantine: {quarantine_path}")
+print(f"Metrics   : {metrics_path}")
 print(f"Year  : {year}")
 print(f"Dataset: {datasetid}")
 print("Format: delta -> delta")
@@ -104,6 +120,7 @@ print(
     "Steps : explode NOAA results, filter required columns, pivot daily weather, "
     "add derived columns"
 )
+print(f"Quality: {'disabled' if skip_quality else 'enabled'}")
 
 if dry_run:
     dbutils.notebook.exit(
@@ -112,8 +129,11 @@ if dry_run:
                 "status": "dry_run",
                 "input": input_path,
                 "output": output_path,
+                "quarantine_output": quarantine_path,
+                "metrics_output": metrics_path,
                 "year": year,
                 "datasetid": datasetid,
+                "skip_quality": skip_quality,
             }
         )
     )
@@ -123,6 +143,10 @@ df_silver = run_silver_noaa_weather(
     input_path=input_path,
     output_path=output_path,
     mode=mode,
+    quarantine_path=quarantine_path,
+    metrics_path=metrics_path,
+    pipeline_run_id=pipeline_run_id,
+    enable_quality=not skip_quality,
 )
 
 print("Silver NOAA Weather saved.")
@@ -139,8 +163,11 @@ dbutils.notebook.exit(
             "status": "success",
             "input": input_path,
             "output": output_path,
+            "quarantine_output": quarantine_path,
+            "metrics_output": metrics_path,
             "year": year,
             "datasetid": datasetid,
+            "skip_quality": skip_quality,
             "rows": rows,
         }
     )

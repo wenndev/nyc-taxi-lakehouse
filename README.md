@@ -195,6 +195,14 @@ poetry run silver-nyc-tlc --skip-count
 poetry run silver-noaa-weather
 ```
 
+A Silver NOAA roda Data Quality antes da publicacao. Registros invalidos ficam em
+quarentena local e metricas ficam em monitoring:
+
+```text
+v2/data/delta/quarantine/noaa/ghcnd_nyc/2025
+v2/data/delta/monitoring/quality/noaa/ghcnd_nyc/2025
+```
+
 Criar Gold diaria:
 
 ```bash
@@ -312,6 +320,7 @@ fact_trips.localizacao_chegada_id_nulo = 0
 - Ingestao NYC TLC 2025 automatizada.
 - Ingestao NOAA com paginacao por `offset`.
 - Fluxo V2.5 para varias estacoes NOAA de NYC.
+- Data Quality NOAA entre Bronze e Silver, com quarentena e metricas.
 - Bronze e Silver em Delta Lake para TLC e NOAA.
 - Silver TLC com colunas temporais, duracao, distancia em km, pagamento, flags e categorias.
 - Silver NOAA com clima diario em uma linha por estacao/data.

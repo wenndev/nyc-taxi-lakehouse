@@ -6,9 +6,19 @@ from pathlib import Path
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
 
-from v2.config.paths import noaa_bronze_dir, noaa_silver_dir
+from v2.config.paths import (
+    noaa_bronze_dir,
+    noaa_quality_metrics_dir,
+    noaa_quarantine_dir,
+    noaa_silver_dir,
+)
 from v2.config.spark import create_spark
 from v2.config.sources import NOAA_GHCND_NYC_STORAGE_ID
+from v2.pipelines.quality.config import NOAAQualityConfig
+from v2.pipelines.quality.exceptions import DataQualityCriticalError
+from v2.pipelines.quality.models import QualityStatus
+from v2.pipelines.quality.storage import write_quality_outputs
+from v2.pipelines.quality.validators import validate_noaa_data
 
 
 def run_silver_noaa_weather(
@@ -16,10 +26,41 @@ def run_silver_noaa_weather(
     input_path: str,
     output_path: str,
     mode: str = "overwrite",
+    quarantine_path: str | None = None,
+    metrics_path: str | None = None,
+    pipeline_run_id: str | None = None,
+    enable_quality: bool = True,
+    quality_config: NOAAQualityConfig | None = None,
 ) -> DataFrame:
     df = spark.read.format("delta").load(input_path)
     df = normalize_results(df)
-    df = filter_required_columns(df)
+
+    if enable_quality:
+        quality_result = validate_noaa_data(
+            df=df,
+            config=quality_config or NOAAQualityConfig(),
+            pipeline_run_id=pipeline_run_id,
+        )
+        print_quality_summary(quality_result.metrics.as_row())
+
+        if quarantine_path and metrics_path:
+            write_quality_outputs(
+                result=quality_result,
+                quarantine_path=quarantine_path,
+                metrics_path=metrics_path,
+                quarantine_mode=mode,
+            )
+
+        if quality_result.status == QualityStatus.FAIL:
+            raise DataQualityCriticalError(
+                "NOAA Data Quality failed. Silver NOAA was not published. "
+                f"pipeline_run_id={quality_result.pipeline_run_id}"
+            )
+
+        df = quality_result.valid_records
+    else:
+        df = filter_required_columns(df)
+
     df = build_daily_weather(df)
     df = add_derived_columns(df)
 
@@ -130,12 +171,30 @@ def is_local_path(path: str) -> bool:
     return "://" not in path
 
 
+def print_quality_summary(metrics: dict[str, object]) -> None:
+    print("Data Quality NOAA summary:")
+    print(f"  pipeline_run_id    : {metrics['pipeline_run_id']}")
+    print(f"  status             : {metrics['pipeline_status']}")
+    print(f"  total_records      : {metrics['total_records']}")
+    print(f"  valid_records      : {metrics['valid_records']}")
+    print(f"  invalid_records    : {metrics['invalid_records']}")
+    print(f"  quality_percentage : {metrics['quality_percentage']}")
+    print(f"  duplicate_count    : {metrics['duplicate_count']}")
+    print(f"  null_error_count   : {metrics['null_error_count']}")
+    print(f"  range_error_count  : {metrics['range_error_count']}")
+    print(f"  future_date_count  : {metrics['future_date_count']}")
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create NOAA Weather Silver Delta table")
     parser.add_argument("--year", type=int, default=2025)
     parser.add_argument("--datasetid", default=NOAA_GHCND_NYC_STORAGE_ID)
     parser.add_argument("--input", default=None)
     parser.add_argument("--output", default=None)
+    parser.add_argument("--quarantine-output", default=None)
+    parser.add_argument("--metrics-output", default=None)
+    parser.add_argument("--pipeline-run-id", default=None)
+    parser.add_argument("--skip-quality", action="store_true")
     parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-count", action="store_true")
@@ -143,14 +202,27 @@ def main() -> int:
 
     input_path = args.input if args.input else str(noaa_bronze_dir(args.year, args.datasetid))
     output_path = args.output if args.output else str(noaa_silver_dir(args.year, args.datasetid))
+    quarantine_path = (
+        args.quarantine_output
+        if args.quarantine_output
+        else str(noaa_quarantine_dir(args.year, args.datasetid))
+    )
+    metrics_path = (
+        args.metrics_output
+        if args.metrics_output
+        else str(noaa_quality_metrics_dir(args.year, args.datasetid))
+    )
 
     print(f"Input : {input_path}")
     print(f"Output: {output_path}")
+    print(f"Quarantine: {quarantine_path}")
+    print(f"Metrics   : {metrics_path}")
     print("Format: delta -> delta")
     print(
         "Steps : explode NOAA results, filter required columns, pivot daily weather, "
         "add derived columns"
     )
+    print(f"Quality: {'disabled' if args.skip_quality else 'enabled'}")
 
     if args.dry_run:
         return 0
@@ -168,6 +240,10 @@ def main() -> int:
             input_path=input_path,
             output_path=output_path,
             mode=args.mode,
+            quarantine_path=quarantine_path,
+            metrics_path=metrics_path,
+            pipeline_run_id=args.pipeline_run_id,
+            enable_quality=not args.skip_quality,
         )
 
         print("Silver NOAA Weather saved.")
