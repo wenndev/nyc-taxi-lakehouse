@@ -1,3 +1,7 @@
+# Resumo:
+# - Consolida varias estacoes NOAA em um clima unico por data.
+# - Evita duplicar corridas na fact ao juntar taxi com clima.
+
 from __future__ import annotations
 
 from pyspark.sql import DataFrame

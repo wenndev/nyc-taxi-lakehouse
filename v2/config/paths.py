@@ -1,3 +1,7 @@
+# Resumo:
+# - Centraliza os caminhos padrao da V2.
+# - Evita espalhar strings de raw, bronze, silver, gold, quarantine e monitoring.
+
 from __future__ import annotations
 
 from pathlib import Path
@@ -22,6 +26,14 @@ def nyc_tlc_bronze_dir(year: int = 2025) -> Path:
 
 def nyc_tlc_silver_dir(year: int = 2025) -> Path:
     return DELTA_ROOT / "silver" / "nyc_tlc" / "yellow" / str(year)
+
+
+def nyc_tlc_quarantine_dir(year: int = 2025) -> Path:
+    return QUARANTINE_ROOT / "nyc_tlc" / "yellow" / str(year)
+
+
+def nyc_tlc_quality_metrics_dir(year: int = 2025) -> Path:
+    return MONITORING_ROOT / "quality" / "nyc_tlc" / "yellow" / str(year)
 
 
 def noaa_raw_dir(year: int = 2025, datasetid: str = NOAA_GHCND_NYC_STORAGE_ID) -> Path:

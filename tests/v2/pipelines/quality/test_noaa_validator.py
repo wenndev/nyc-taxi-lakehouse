@@ -1,3 +1,7 @@
+# Resumo:
+# - Testa o Data Quality da NOAA com pequenos DataFrames Spark.
+# - Garante validos, invalidos, metricas, duplicatas, schema e quarentena logica.
+
 from __future__ import annotations
 
 import unittest

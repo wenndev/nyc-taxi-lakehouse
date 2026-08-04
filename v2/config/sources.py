@@ -1,3 +1,7 @@
+# Resumo:
+# - Centraliza URLs, nomes de arquivos e identificadores das fontes.
+# - Ajuda ingestion, Bronze e Silver a usarem os mesmos nomes de TLC e NOAA.
+
 from __future__ import annotations
 
 

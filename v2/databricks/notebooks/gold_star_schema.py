@@ -1,4 +1,8 @@
 # Databricks notebook source
+# Resumo:
+# - Wrapper Databricks para criar o Star Schema da Gold.
+# - Recebe caminhos por widgets e chama run_gold_star_schema.
+
 # MAGIC %md
 # MAGIC # Gold Star Schema
 # MAGIC

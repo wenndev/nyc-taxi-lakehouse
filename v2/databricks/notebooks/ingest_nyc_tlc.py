@@ -1,4 +1,8 @@
 # Databricks notebook source
+# Resumo:
+# - Wrapper Databricks para baixar Parquets da NYC TLC.
+# - Recebe parametros por widgets e chama a ingestion local reaproveitavel.
+
 # MAGIC %md
 # MAGIC # Ingest NYC TLC
 # MAGIC

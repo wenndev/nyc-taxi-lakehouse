@@ -1,3 +1,7 @@
+# Resumo:
+# - Cria a Silver das corridas NYC TLC.
+# - Renomeia colunas, roda Data Quality, cria datas, duracao, km, categorias e flags.
+
 from __future__ import annotations
 
 import argparse
@@ -18,8 +22,18 @@ from pyspark.sql.functions import (
     year,
 )
 
-from v2.config.paths import nyc_tlc_bronze_dir, nyc_tlc_silver_dir
+from v2.config.paths import (
+    nyc_tlc_bronze_dir,
+    nyc_tlc_quality_metrics_dir,
+    nyc_tlc_quarantine_dir,
+    nyc_tlc_silver_dir,
+)
 from v2.config.spark import create_spark
+from v2.pipelines.quality.config import TLCQualityConfig
+from v2.pipelines.quality.exceptions import DataQualityCriticalError
+from v2.pipelines.quality.models import QualityStatus
+from v2.pipelines.quality.storage import write_quality_outputs
+from v2.pipelines.quality.validators import validate_tlc_data
 
 COLUMN_RENAMES = {
     "VendorID": "id_vendedor",
@@ -75,15 +89,47 @@ def run_silver_nyc_tlc(
     start_date: str | None = None,
     end_date: str | None = None,
     limit_rows: int | None = None,
+    quarantine_path: str | None = None,
+    metrics_path: str | None = None,
+    pipeline_run_id: str | None = None,
+    enable_quality: bool = True,
+    quality_config: TLCQualityConfig | None = None,
 ) -> DataFrame:
     df = spark.read.format("delta").load(input_path)
     df = rename_columns(df)
     df = filter_date_range(df, start_date=start_date, end_date=end_date)
     if limit_rows:
         df = df.limit(limit_rows)
-    df = filter_critical_columns(df)
+
+    if enable_quality:
+        quality_result = validate_tlc_data(
+            df=df,
+            config=quality_config or TLCQualityConfig(),
+            pipeline_run_id=pipeline_run_id,
+        )
+        print_quality_summary(quality_result.metrics.as_row())
+
+        if quarantine_path and metrics_path:
+            write_quality_outputs(
+                result=quality_result,
+                quarantine_path=quarantine_path,
+                metrics_path=metrics_path,
+                quarantine_mode=mode,
+            )
+
+        if quality_result.status == QualityStatus.FAIL:
+            raise DataQualityCriticalError(
+                "NYC TLC Data Quality failed. Silver TLC was not published. "
+                f"pipeline_run_id={quality_result.pipeline_run_id}"
+            )
+
+        df = quality_result.valid_records
+    else:
+        df = filter_critical_columns(df)
+
     df = fill_numeric_nulls(df)
-    df = filter_invalid_values(df)
+    if not enable_quality:
+        df = filter_invalid_values(df)
     df = fill_categorical_nulls(df)
     df = add_derived_columns(df)
     df = add_semantic_columns(df)
@@ -343,6 +389,10 @@ def main() -> int:
     parser.add_argument("--year", type=int, default=2025)
     parser.add_argument("--input", default=None)
     parser.add_argument("--output", default=None)
+    parser.add_argument("--quarantine-output", default=None)
+    parser.add_argument("--metrics-output", default=None)
+    parser.add_argument("--pipeline-run-id", default=None)
+    parser.add_argument("--skip-quality", action="store_true")
     parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])
     parser.add_argument("--start-date", default=None)
     parser.add_argument("--end-date", default=None)
@@ -353,15 +403,27 @@ def main() -> int:
 
     input_path = args.input if args.input else str(nyc_tlc_bronze_dir(args.year))
     output_path = args.output if args.output else str(nyc_tlc_silver_dir(args.year))
+    quarantine_path = (
+        args.quarantine_output
+        if args.quarantine_output
+        else str(nyc_tlc_quarantine_dir(args.year))
+    )
+    metrics_path = (
+        args.metrics_output
+        if args.metrics_output
+        else str(nyc_tlc_quality_metrics_dir(args.year))
+    )
 
     print(f"Input : {input_path}")
     print(f"Output: {output_path}")
+    print(f"Quarantine: {quarantine_path}")
+    print(f"Metrics   : {metrics_path}")
     print("Format: delta -> delta")
     print(
-        "Steps : rename columns, filter critical columns, fill nulls, "
-        "filter invalid values, add derived columns, add semantic columns, "
-        "drop duplicates"
+        "Steps : rename columns, validate quality, fill nulls, "
+        "add derived columns, add semantic columns, drop duplicates"
     )
+    print(f"Quality: {'disabled' if args.skip_quality else 'enabled'}")
     if args.start_date or args.end_date:
         print(
             f"Date filter: {args.start_date or 'beginning'} -> {args.end_date or 'end'}"
@@ -388,6 +450,11 @@ def main() -> int:
             start_date=args.start_date,
             end_date=args.end_date,
             limit_rows=args.limit,
+            quarantine_path=quarantine_path,
+            metrics_path=metrics_path,
+            pipeline_run_id=args.pipeline_run_id,
+            enable_quality=not args.skip_quality,
+            quality_config=TLCQualityConfig.for_year(args.year),
         )
 
         print("Silver NYC TLC saved.")
@@ -403,6 +470,20 @@ def main() -> int:
 
 def is_local_path(path: str) -> bool:
     return "://" not in path
+
+
+def print_quality_summary(metrics: dict[str, object]) -> None:
+    print("Data Quality NYC TLC summary:")
+    print(f"  pipeline_run_id    : {metrics['pipeline_run_id']}")
+    print(f"  status             : {metrics['pipeline_status']}")
+    print(f"  total_records      : {metrics['total_records']}")
+    print(f"  valid_records      : {metrics['valid_records']}")
+    print(f"  invalid_records    : {metrics['invalid_records']}")
+    print(f"  quality_percentage : {metrics['quality_percentage']}")
+    print(f"  duplicate_count    : {metrics['duplicate_count']}")
+    print(f"  null_error_count   : {metrics['null_error_count']}")
+    print(f"  range_error_count  : {metrics['range_error_count']}")
+    print(f"  future_date_count  : {metrics['future_date_count']}")
 
 
 if __name__ == "__main__":

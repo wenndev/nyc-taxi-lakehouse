@@ -1,3 +1,7 @@
+# Resumo:
+# - Baixa os arquivos Parquet publicos da NYC TLC Yellow Taxi.
+# - Para 2025, monta automaticamente os links de janeiro a dezembro.
+
 from __future__ import annotations
 
 import argparse

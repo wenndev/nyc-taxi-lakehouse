@@ -1,3 +1,7 @@
+# Resumo:
+# - Cria o Star Schema da Gold para BI.
+# - Gera dim_data, dim_clima, dim_localizacao e fact_trips.
+
 from __future__ import annotations
 
 import argparse

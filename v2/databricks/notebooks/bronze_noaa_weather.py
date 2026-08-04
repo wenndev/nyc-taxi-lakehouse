@@ -1,4 +1,8 @@
 # Databricks notebook source
+# Resumo:
+# - Wrapper Databricks para criar Bronze Delta da NOAA.
+# - Recebe input/output por widgets e chama run_bronze_noaa_weather.
+
 # MAGIC %md
 # MAGIC # Bronze NOAA Weather
 # MAGIC

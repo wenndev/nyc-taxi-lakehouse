@@ -1,3 +1,7 @@
+# Resumo:
+# - Grava as saidas de Data Quality em Delta.
+# - Invalidos vao para quarantine e metricas vao para monitoring.
+
 from __future__ import annotations
 
 from pyspark.sql import SparkSession
@@ -61,4 +65,3 @@ def metrics_to_dataframe(spark: SparkSession, metrics: QualityMetrics):
     )
 
     return spark.createDataFrame([metrics.as_row()], schema=schema)
-

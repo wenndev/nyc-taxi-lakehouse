@@ -1,4 +1,8 @@
 # Databricks notebook source
+# Resumo:
+# - Wrapper Databricks para criar Silver Delta da NYC TLC.
+# - Recebe caminhos, Data Quality e filtros por widgets e chama run_silver_nyc_tlc.
+
 # MAGIC %md
 # MAGIC # Silver NYC TLC
 # MAGIC
@@ -53,6 +57,7 @@ spark = get_spark()
 
 # COMMAND ----------
 
+from v2.pipelines.quality.config import TLCQualityConfig  # noqa: E402
 from v2.pipelines.silver.silver_nyc_tlc import run_silver_nyc_tlc  # noqa: E402
 
 # COMMAND ----------
@@ -60,6 +65,10 @@ from v2.pipelines.silver.silver_nyc_tlc import run_silver_nyc_tlc  # noqa: E402
 dbutils.widgets.text("year", "2025")
 dbutils.widgets.text("input", "")
 dbutils.widgets.text("output", "")
+dbutils.widgets.text("quarantine_output", "")
+dbutils.widgets.text("metrics_output", "")
+dbutils.widgets.text("pipeline_run_id", "")
+dbutils.widgets.text("skip_quality", "false")
 dbutils.widgets.text("mode", "overwrite")
 dbutils.widgets.text("start_date", "")
 dbutils.widgets.text("end_date", "")
@@ -86,6 +95,10 @@ def bool_widget(name: str) -> bool:
 year = int(widget("year"))
 input_path = optional_widget("input")
 output_path = optional_widget("output")
+quarantine_path = optional_widget("quarantine_output")
+metrics_path = optional_widget("metrics_output")
+pipeline_run_id = optional_widget("pipeline_run_id")
+skip_quality = bool_widget("skip_quality")
 mode = widget("mode")
 start_date = optional_widget("start_date")
 end_date = optional_widget("end_date")
@@ -99,15 +112,23 @@ if not input_path:
 if not output_path:
     raise ValueError("Parameter 'output' is required.")
 
+if not skip_quality and not quarantine_path:
+    raise ValueError("Parameter 'quarantine_output' is required when quality is enabled.")
+
+if not skip_quality and not metrics_path:
+    raise ValueError("Parameter 'metrics_output' is required when quality is enabled.")
+
 print(f"Input : {input_path}")
 print(f"Output: {output_path}")
+print(f"Quarantine: {quarantine_path}")
+print(f"Metrics   : {metrics_path}")
 print(f"Year  : {year}")
 print("Format: delta -> delta")
 print(
-    "Steps : rename columns, filter critical columns, fill nulls, "
-    "filter invalid values, add derived columns, add semantic columns, "
-    "drop duplicates"
+    "Steps : rename columns, validate quality, fill nulls, "
+    "add derived columns, add semantic columns, drop duplicates"
 )
+print(f"Quality: {'disabled' if skip_quality else 'enabled'}")
 if start_date or end_date:
     print(f"Date filter: {start_date or 'beginning'} -> {end_date or 'end'}")
 if limit_rows:
@@ -120,7 +141,10 @@ if dry_run:
                 "status": "dry_run",
                 "input": input_path,
                 "output": output_path,
+                "quarantine_output": quarantine_path,
+                "metrics_output": metrics_path,
                 "year": year,
+                "skip_quality": skip_quality,
             }
         )
     )
@@ -133,6 +157,11 @@ df_silver = run_silver_nyc_tlc(
     start_date=start_date,
     end_date=end_date,
     limit_rows=limit_rows,
+    quarantine_path=quarantine_path,
+    metrics_path=metrics_path,
+    pipeline_run_id=pipeline_run_id,
+    enable_quality=not skip_quality,
+    quality_config=TLCQualityConfig.for_year(year),
 )
 
 print("Silver NYC TLC saved.")
@@ -149,7 +178,10 @@ dbutils.notebook.exit(
             "status": "success",
             "input": input_path,
             "output": output_path,
+            "quarantine_output": quarantine_path,
+            "metrics_output": metrics_path,
             "year": year,
+            "skip_quality": skip_quality,
             "rows": rows,
         }
     )

@@ -1,3 +1,7 @@
+# Resumo:
+# - Define os modelos de retorno da qualidade.
+# - Padroniza valid_records, invalid_records, metricas, status e pipeline_run_id.
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -96,4 +100,3 @@ class DataQualityResult:
 
 def utc_now() -> datetime:
     return datetime.now(UTC)
-

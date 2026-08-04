@@ -1,4 +1,8 @@
 # Databricks notebook source
+# Resumo:
+# - Wrapper Databricks para criar Bronze Delta da NYC TLC.
+# - Recebe input/output por widgets e chama run_bronze_nyc_tlc.
+
 # MAGIC %md
 # MAGIC # Bronze NYC TLC
 # MAGIC

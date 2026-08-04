@@ -19,23 +19,27 @@ v2/data/delta/silver/nyc_tlc/yellow/2025
 ## Ordem de tratamento
 
 1. Renomear colunas para PT-BR.
-2. Filtrar colunas criticas nulas ou invalidas.
-3. Tratar nulos numericos nao criticos.
-4. Filtrar valores impossiveis.
-5. Tratar nulos categoricos.
-6. Criar colunas derivadas para analise temporal.
-7. Criar descricoes e flags semanticas.
-8. Remover duplicatas de negocio.
-9. Salvar Delta Silver.
+2. Executar Data Quality no grao corrida.
+3. Enviar registros invalidos para quarentena.
+4. Enviar metricas para monitoring.
+5. Publicar somente registros validos na Silver.
+6. Tratar nulos numericos nao criticos.
+7. Tratar nulos categoricos.
+8. Criar colunas derivadas para analise temporal.
+9. Criar descricoes e flags semanticas.
+10. Remover duplicatas de negocio por seguranca.
+11. Salvar Delta Silver.
 
 Implementacao atual:
 
 ```text
 Bronze Delta
   -> renomeacao de colunas
-  -> filtro de colunas criticas
+  -> Data Quality TLC
+  -> valid_records
+  -> invalid_records em quarentena
+  -> metricas em monitoring
   -> tratamento de nulos numericos
-  -> filtro de valores impossiveis
   -> tratamento de nulos categoricos
   -> criacao de colunas derivadas
   -> criacao de descricoes e flags semanticas
@@ -87,8 +91,15 @@ registro_suspeito
 Regra de nulos:
 
 ```text
-Colunas criticas nulas removem o registro.
+Colunas criticas nulas mandam o registro para quarentena.
 Colunas numericas nao criticas nulas viram 0 e podem ser marcadas como suspeitas.
+```
+
+Saidas de Data Quality:
+
+```text
+v2/data/delta/quarantine/nyc_tlc/yellow/2025
+v2/data/delta/monitoring/quality/nyc_tlc/yellow/2025
 ```
 
 Comando:
@@ -96,6 +107,12 @@ Comando:
 ```bash
 poetry run silver-nyc-tlc --dry-run
 poetry run silver-nyc-tlc --skip-count
+```
+
+Desativar Data Quality apenas para debug:
+
+```bash
+poetry run silver-nyc-tlc --skip-quality
 ```
 
 Teste local com menos dados:

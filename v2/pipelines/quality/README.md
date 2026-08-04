@@ -2,21 +2,25 @@
 
 Camada modular de qualidade para validar dados antes da publicacao na Silver.
 
-Primeira implementacao: NOAA Weather.
+Implementacoes atuais:
+
+- NOAA Weather.
+- NYC TLC Yellow Taxi.
 
 ## Onde Entra
 
 ```text
-Bronze NOAA Delta
-  -> explode results
-  -> Data Quality NOAA
+Bronze Delta
+  -> padronizacao inicial da Silver
+  -> Data Quality
       -> valid_records
       -> invalid_records em quarentena
       -> metricas em monitoring
-  -> Silver NOAA Delta
+  -> Silver Delta
 ```
 
-A Bronze continua preservada. A Silver so recebe registros validos.
+A Bronze continua preservada. A Silver so recebe registros validos. Em caso de
+`FAIL`, as metricas e a quarentena sao gravadas, mas a Silver nao e publicada.
 
 ## Contrato Principal
 
@@ -24,6 +28,12 @@ A Bronze continua preservada. A Silver so recebe registros validos.
 result = validate_noaa_data(
     df=noaa_normalized_df,
     config=NOAAQualityConfig(),
+    pipeline_run_id=run_id,
+)
+
+result = validate_tlc_data(
+    df=tlc_renamed_df,
+    config=TLCQualityConfig.for_year(2025),
     pipeline_run_id=run_id,
 )
 ```
@@ -37,9 +47,9 @@ result.metrics
 result.status
 ```
 
-## Grao Validado
+## Graos Validados
 
-O validador NOAA recebe o DataFrame normalizado pela Silver, antes da agregacao:
+NOAA recebe o DataFrame normalizado pela Silver, antes da agregacao:
 
 ```text
 1 linha = 1 observacao NOAA por data/estacao/tipo_dado
@@ -57,7 +67,27 @@ arquivo_origem
 data_processamento_bronze
 ```
 
+NYC TLC recebe o DataFrame com colunas ja renomeadas para PT-BR, antes das
+colunas derivadas:
+
+```text
+1 linha = 1 corrida de taxi
+```
+
+Colunas criticas da TLC:
+
+```text
+id_vendedor
+data_hora_partida
+data_hora_chegada
+id_local_partida
+id_local_chegada
+valor_total
+```
+
 ## Regras Atuais
+
+NOAA:
 
 - DataFrame vazio.
 - Colunas esperadas ausentes.
@@ -73,18 +103,38 @@ data_processamento_bronze
 Latitude e longitude nao foram implementadas porque essas colunas nao existem no
 schema real usado pela NOAA no projeto.
 
+NYC TLC:
+
+- DataFrame vazio.
+- Colunas esperadas ausentes.
+- Tipos incompativeis.
+- Registros completamente vazios.
+- Nulos em campos criticos.
+- Vendedor invalido.
+- Local de partida ou chegada fora do range da Taxi Zone Lookup.
+- Chegada anterior a partida.
+- Data futura.
+- Corrida fora do ano configurado.
+- Valores fora de limites plausiveis: passageiros, distancia, tarifa, total e
+  duracao.
+- Duplicata pela chave de negocio:
+  `id_vendedor`, `data_hora_partida`, `id_local_partida`, `id_local_chegada`,
+  `valor_total`.
+
 ## Saidas Locais
 
 Quarentena:
 
 ```text
 v2/data/delta/quarantine/noaa/ghcnd_nyc/2025
+v2/data/delta/quarantine/nyc_tlc/yellow/2025
 ```
 
 Metricas:
 
 ```text
 v2/data/delta/monitoring/quality/noaa/ghcnd_nyc/2025
+v2/data/delta/monitoring/quality/nyc_tlc/yellow/2025
 ```
 
 Esses caminhos sao Delta locais e estao ignorados no Git.
@@ -99,8 +149,10 @@ WARNING >= 95% e < 99%
 FAIL    < 95%
 ```
 
-Erros criticos, como schema incompatível, DataFrame vazio e datas futuras,
-podem causar `FAIL`. Em caso de `FAIL`, a Silver NOAA nao e publicada.
+Schema incompativel e DataFrame vazio causam `FAIL`. Regras linha a linha entram
+na porcentagem de qualidade. Na NOAA, algumas regras tambem sao criticas. Na TLC,
+os registros invalidos sao removidos da Silver e auditados na quarentena; o
+pipeline so bloqueia se a qualidade ficar abaixo do limite de `FAIL`.
 
 ## Validacao Atual
 
@@ -115,10 +167,25 @@ quality_percentage = 100.0
 quarantine_rows = 0
 ```
 
+Execucao local com amostra dev da TLC:
+
+```text
+pipeline_status = WARNING
+total_records = 100000
+valid_records = 97060
+invalid_records = 2940
+quality_percentage = 97.06
+```
+
+Esse `WARNING` e aceitavel na amostra porque os registros invalidos foram
+isolados em quarentena e a qualidade ficou acima do limite minimo de publicacao.
+
 ## Testes
 
 ```bash
 poetry run python -m unittest tests.v2.pipelines.quality.test_noaa_validator
+poetry run python -m unittest tests.v2.pipelines.quality.test_tlc_validator
+poetry run python -m unittest discover tests
 ```
 
-Os testes usam pequenos DataFrames Spark locais e nao acessam API NOAA nem Azure.
+Os testes usam pequenos DataFrames Spark locais e nao acessam API externa nem Azure.

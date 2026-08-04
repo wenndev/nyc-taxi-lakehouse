@@ -183,6 +183,15 @@ poetry run silver-nyc-tlc --dry-run
 poetry run silver-nyc-tlc --skip-count
 ```
 
+A Silver NYC TLC executa Data Quality depois do rename das colunas e antes das
+colunas derivadas. Registros invalidos vao para quarentena e metricas vao para
+monitoring:
+
+```text
+v2/data/delta/quarantine/nyc_tlc/yellow/2025
+v2/data/delta/monitoring/quality/nyc_tlc/yellow/2025
+```
+
 Criar Silver NOAA:
 
 ```bash
@@ -293,7 +302,7 @@ fact_trips.clima_id_nulo = 0
 
 - Paginacao da API NOAA com `offset`.
 - Desenho V2.5 para clima NYC consolidado usando varias estacoes NOAA.
-- Data Quality modular para NOAA entre Bronze e Silver.
+- Data Quality modular para NOAA e NYC TLC entre Bronze e Silver.
 - Silver TLC com colunas temporais, duracao, passageiros, pagamento e flags.
 - Gold diaria usando calendario completo para evitar perda de dias no join.
 - Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` e `fact_trips`.

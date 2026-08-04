@@ -158,6 +158,10 @@ Parametros principais no ADF:
 year
 input
 output
+quarantine_output
+metrics_output
+pipeline_run_id
+skip_quality
 mode
 start_date
 end_date
@@ -171,7 +175,13 @@ Exemplo:
 ```text
 input=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/nyc_tlc/yellow/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
+quarantine_output=/Volumes/<catalog>/<schema>/<volume>/delta/quarantine/nyc_tlc/yellow/2025
+metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/nyc_tlc/yellow/2025
+skip_quality=false
 ```
+
+Se o Data Quality retornar `FAIL`, a Silver TLC nao e publicada e o job deve
+falhar de forma controlada.
 
 ### Silver NOAA Weather
 

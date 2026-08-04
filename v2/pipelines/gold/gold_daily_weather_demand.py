@@ -1,3 +1,7 @@
+# Resumo:
+# - Cria a Gold diaria para analise clima x demanda.
+# - Entrega 1 linha por dia com metricas de taxi e clima consolidado.
+
 from __future__ import annotations
 
 import argparse

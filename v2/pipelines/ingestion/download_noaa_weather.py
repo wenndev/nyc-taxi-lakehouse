@@ -1,3 +1,7 @@
+# Resumo:
+# - Baixa dados climaticos da NOAA usando a API CDO.
+# - Resolve a paginacao por offset para nao ficar limitado a poucos registros.
+
 from __future__ import annotations
 
 import argparse

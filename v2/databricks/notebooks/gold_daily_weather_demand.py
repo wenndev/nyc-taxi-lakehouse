@@ -1,4 +1,8 @@
 # Databricks notebook source
+# Resumo:
+# - Wrapper Databricks para criar a Gold diaria clima x demanda.
+# - Recebe caminhos por widgets e chama run_gold_daily_weather_demand.
+
 # MAGIC %md
 # MAGIC # Gold Daily Weather Demand
 # MAGIC

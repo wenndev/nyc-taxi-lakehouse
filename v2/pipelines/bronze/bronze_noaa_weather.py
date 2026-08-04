@@ -1,3 +1,7 @@
+# Resumo:
+# - Le as paginas JSON brutas da NOAA e salva como Delta Bronze.
+# - Mantem cada pagina com metadados de arquivo e data de processamento.
+
 from __future__ import annotations
 
 import argparse

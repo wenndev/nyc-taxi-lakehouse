@@ -1,4 +1,8 @@
 # Databricks notebook source
+# Resumo:
+# - Wrapper Databricks para baixar dados NOAA com paginacao por offset.
+# - Busca token em Secret Scope e chama a ingestion local reaproveitavel.
+
 # MAGIC %md
 # MAGIC # Ingest NOAA Weather
 # MAGIC

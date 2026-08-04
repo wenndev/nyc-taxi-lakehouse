@@ -1,3 +1,7 @@
+# Resumo:
+# - Le os Parquets brutos da NYC TLC e salva como Delta Bronze.
+# - Mantem a estrutura original para preservar o dado de entrada.
+
 from __future__ import annotations
 
 import argparse

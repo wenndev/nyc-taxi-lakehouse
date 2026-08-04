@@ -1,3 +1,7 @@
+# Resumo:
+# - Cria a SparkSession local com suporte a Delta Lake.
+# - Esse ponto unico facilita rodar o mesmo PySpark localmente e no Databricks.
+
 from __future__ import annotations
 
 from pyspark.sql import SparkSession

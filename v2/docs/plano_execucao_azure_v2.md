@@ -86,6 +86,8 @@ Opcao recomendada para os downloaders Python no Databricks:
 /Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/gold/star_schema/2025
+/Volumes/<catalog>/<schema>/<volume>/delta/quarantine/nyc_tlc/yellow/2025
+/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/nyc_tlc/yellow/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/quarantine/noaa/ghcnd_nyc/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/noaa/ghcnd_nyc/2025
 ```
@@ -139,7 +141,7 @@ Ordem recomendada no ADF:
 2. ingest_noaa_weather
 3. bronze_nyc_tlc
 4. bronze_noaa_weather
-5. silver_nyc_tlc
+5. silver_nyc_tlc com Data Quality TLC
 6. silver_noaa_weather com Data Quality NOAA
 7. gold_daily_weather_demand
 8. gold_star_schema
@@ -232,6 +234,10 @@ dry_run=false
 year=2025
 input=/Volumes/<catalog>/<schema>/<volume>/delta/bronze/nyc_tlc/yellow/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
+quarantine_output=/Volumes/<catalog>/<schema>/<volume>/delta/quarantine/nyc_tlc/yellow/2025
+metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/nyc_tlc/yellow/2025
+pipeline_run_id=<adf_pipeline_run_id>
+skip_quality=false
 mode=overwrite
 start_date=2025-01-01
 end_date=2026-01-01
@@ -300,6 +306,16 @@ quality.pipeline_status == PASS ou WARNING
 quality.invalid_records revisado quando maior que 0
 ```
 
+Validar Silver TLC:
+
+```text
+linhas > 0
+data_min >= 2025-01-01
+data_max < 2026-01-01
+quality.pipeline_status == PASS ou WARNING
+quality.invalid_records revisado quando maior que 0
+```
+
 Validar Gold diaria:
 
 ```text
@@ -338,8 +354,8 @@ chaves_orfas == 0
 - A Silver TLC completa e a Gold Star completa podem ser pesadas localmente.
 - No Databricks, usar cluster com memoria suficiente para a TLC 2025 completa.
 - `skip_count=true` evita disparar contagens caras durante processamento pesado.
-- A Silver NOAA ja executa Data Quality; em caso de `FAIL`, a Silver nao deve ser
-  publicada.
+- As Silvers TLC e NOAA ja executam Data Quality; em caso de `FAIL`, a Silver
+  correspondente nao deve ser publicada.
 - A V2 ainda nao implementa pipeline incremental; atualmente o padrao e
   `overwrite`.
 - `OPTIMIZE` e `ZORDER` devem ser aplicados depois da primeira execucao full,

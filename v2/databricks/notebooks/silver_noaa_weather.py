@@ -1,4 +1,8 @@
 # Databricks notebook source
+# Resumo:
+# - Wrapper Databricks para criar Silver Delta da NOAA.
+# - Recebe caminhos e Data Quality por widgets e chama run_silver_noaa_weather.
+
 # MAGIC %md
 # MAGIC # Silver NOAA Weather
 # MAGIC

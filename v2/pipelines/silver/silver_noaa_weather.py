@@ -1,3 +1,7 @@
+# Resumo:
+# - Cria a Silver da NOAA.
+# - Explode os resultados da API, roda Data Quality e gera clima por estacao/dia.
+
 from __future__ import annotations
 
 import argparse
