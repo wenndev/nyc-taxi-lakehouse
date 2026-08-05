@@ -231,6 +231,17 @@ v2/data/delta/quarantine/noaa/ghcnd_nyc/2025
 v2/data/delta/monitoring/quality/noaa/ghcnd_nyc/2025
 ```
 
+Validar as tabelas Silver publicadas:
+
+```bash
+poetry run validate-silver-nyc-tlc --expected-days 365
+poetry run validate-silver-taxi-zone-lookup
+poetry run validate-silver-noaa-weather
+```
+
+A validacao Pos-Silver entra antes da Gold. Ela confirma que a tabela entregue
+pela Silver esta pronta para alimentar as camadas analiticas.
+
 Criar Gold diaria:
 
 ```bash

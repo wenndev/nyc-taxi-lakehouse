@@ -107,6 +107,8 @@ Comando:
 ```bash
 poetry run silver-nyc-tlc --dry-run
 poetry run silver-nyc-tlc --skip-count
+poetry run validate-silver-nyc-tlc --dry-run
+poetry run validate-silver-nyc-tlc --expected-days 365
 ```
 
 Desativar Data Quality apenas para debug:
@@ -158,6 +160,8 @@ Comando:
 ```bash
 poetry run silver-taxi-zone-lookup --dry-run
 poetry run silver-taxi-zone-lookup
+poetry run validate-silver-taxi-zone-lookup --dry-run
+poetry run validate-silver-taxi-zone-lookup
 ```
 
 ## NOAA Weather
@@ -197,6 +201,8 @@ Comando:
 ```bash
 poetry run silver-noaa-weather --dry-run
 poetry run silver-noaa-weather
+poetry run validate-silver-noaa-weather --dry-run
+poetry run validate-silver-noaa-weather
 ```
 
 Desativar Data Quality apenas para debug:
@@ -210,4 +216,42 @@ Teste ainda mais leve, criando uma Bronze de amostra antes:
 ```bash
 poetry run bronze-nyc-tlc --input v2/data/raw/nyc_tlc/yellow/2025/yellow_tripdata_2025-01.parquet --output v2/data/delta/dev/bronze/nyc_tlc/yellow_sample/2025_01 --limit 100000 --skip-count
 poetry run silver-nyc-tlc --input v2/data/delta/dev/bronze/nyc_tlc/yellow_sample/2025_01 --output v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 --skip-count
+poetry run validate-silver-nyc-tlc --input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 --expected-days 2
 ```
+
+## Validadores Pos-Silver
+
+Os validadores Pos-Silver conferem a tabela ja publicada. Eles nao substituem o
+Data Quality da Silver; eles verificam se a entrega final esta pronta para a Gold.
+
+Ordem recomendada:
+
+```text
+Bronze
+  -> Silver com Data Quality
+  -> Validate Silver
+  -> Gold
+  -> Validate Gold
+```
+
+O validador da TLC confere:
+
+- colunas obrigatorias da Silver final;
+- viagens apenas dentro do ano esperado;
+- locais entre 1 e 265;
+- valores e duracao validos;
+- duplicatas de negocio removidas.
+
+O validador da NOAA confere:
+
+- 365 dias para o ano completo;
+- 1 linha por estacao/dia;
+- minimo esperado de estacoes;
+- datas dentro do ano;
+- metricas climaticas em faixas plausiveis.
+
+O validador do Taxi Zone Lookup confere:
+
+- 265 zonas oficiais;
+- `location_id` unico;
+- `borough`, `zona` e `zona_servico` preenchidos.

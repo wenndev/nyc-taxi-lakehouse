@@ -68,8 +68,12 @@ v2/
       bronze_noaa_weather.py
     silver/
       silver_nyc_tlc.py
+      validate_silver_nyc_tlc.py
       silver_taxi_zone_lookup.py
+      validate_silver_taxi_zone_lookup.py
       silver_noaa_weather.py
+      validate_silver_noaa_weather.py
+      validate_silver_common.py
     quality/
       config.py
       models.py
@@ -228,6 +232,7 @@ Criar Silver Taxi Zone Lookup:
 ```bash
 poetry run silver-taxi-zone-lookup --dry-run
 poetry run silver-taxi-zone-lookup
+poetry run validate-silver-taxi-zone-lookup
 ```
 
 A Silver Taxi Zone Lookup tambem roda Data Quality. Essa fonte enriquece a
@@ -243,6 +248,7 @@ Criar Silver NOAA:
 ```bash
 poetry run silver-noaa-weather --dry-run
 poetry run silver-noaa-weather
+poetry run validate-silver-noaa-weather
 ```
 
 A Silver NOAA executa Data Quality antes de publicar os dados tratados. Registros
@@ -252,6 +258,15 @@ invalidos vao para quarentena e metricas vao para monitoring:
 v2/data/delta/quarantine/noaa/ghcnd_nyc/2025
 v2/data/delta/monitoring/quality/noaa/ghcnd_nyc/2025
 ```
+
+Validar Silver TLC antes de gerar a Gold:
+
+```bash
+poetry run validate-silver-nyc-tlc --expected-days 365
+```
+
+Para amostra local, informe a quantidade esperada de dias da amostra ou remova
+`--expected-days`.
 
 ## Gold
 
