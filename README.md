@@ -15,7 +15,7 @@ O repositorio possui duas fases do mesmo projeto:
 | Versao | Periodo | Status | Descricao |
 |---|---:|---|---|
 | V1 | 2024 | Preservada | Projeto original em Azure, ADF, Databricks, PySpark e Delta Lake. |
-| V2/V2.5 | 2025 | Em refatoracao | Reconstrucao local-first com Poetry, PySpark e Delta Lake, preparada para voltar ao Azure depois. |
+| V2/V2.5 | 2025 | Preparada para cloud | Reconstrucao local-first com Poetry, PySpark e Delta Lake, preparada para execucao full no Azure Databricks. |
 
 A V1 gerou a Gold publicada no Kaggle:
 
@@ -174,119 +174,59 @@ nyc-taxi-lakehouse/
 
 ## Como Rodar a V2 Localmente
 
+Localmente, use a V2 principalmente para validar logica, samples e qualidade dos
+dados. A execucao completa da TLC 2025 deve acontecer no Databricks, porque o
+volume de dados e alto.
+
+Runbook completo com todos os comandos:
+
+[v2/docs/01_runbook_execucao.md](v2/docs/01_runbook_execucao.md)
+
 Instalar dependencias:
 
 ```bash
 poetry install
 ```
 
-Baixar NYC TLC 2025:
-
-```bash
-poetry run ingest-nyc-tlc
-```
-
-Baixar Taxi Zone Lookup:
-
-```bash
-poetry run ingest-taxi-zone-lookup
-```
-
-Configurar token NOAA localmente.
-
-Opcao recomendada: criar `.env` a partir do exemplo:
-
-```bash
-cp .env.example .env
-```
-
-Depois preencha:
+Para usar a NOAA localmente, crie `.env` a partir de `.env.example` e preencha:
 
 ```text
 NOAA_TOKEN=seu_token_aqui
 ```
 
-O arquivo `.env` esta no `.gitignore` e nao deve ser commitado.
-
-Baixar NOAA 2025 com paginacao para a V2.5, usando varias estacoes de NYC:
+Fluxo recomendado para validar localmente ate a Silver:
 
 ```bash
+poetry run ingest-nyc-tlc --start-month 1 --end-month 1
+poetry run ingest-taxi-zone-lookup
 poetry run ingest-noaa-weather \
   --year 2025 \
   --locationid CITY:US360019
-```
-
-Com `locationid CITY:US360019`, a saida padrao fica separada em:
-
-```text
-v2/data/raw/noaa/ghcnd_nyc/2025
-```
-
-Criar Bronze:
-
-```bash
 poetry run bronze-nyc-tlc --skip-count
 poetry run bronze-taxi-zone-lookup --skip-count
 poetry run bronze-noaa-weather --skip-count
-```
-
-Criar Silver:
-
-```bash
 poetry run silver-nyc-tlc --skip-count
 poetry run silver-taxi-zone-lookup
 poetry run silver-noaa-weather
 ```
 
-A Silver TLC, a Silver Taxi Zone Lookup e a Silver NOAA rodam Data Quality antes
-da publicacao. Registros invalidos ficam em quarentena local e metricas ficam em
-monitoring:
+Para gerar Gold localmente, prefira o fluxo dev com sample mostrado na secao
+`Teste Local Leve` ou use o runbook completo.
 
-```text
-v2/data/delta/quarantine/nyc_tlc/yellow/2025
-v2/data/delta/monitoring/quality/nyc_tlc/yellow/2025
-v2/data/delta/quarantine/nyc_tlc/taxi_zone_lookup
-v2/data/delta/monitoring/quality/nyc_tlc/taxi_zone_lookup
-v2/data/delta/quarantine/noaa/ghcnd_nyc/2025
-v2/data/delta/monitoring/quality/noaa/ghcnd_nyc/2025
-```
-
-Validar as tabelas Silver publicadas:
+Validacoes principais, depois que as respectivas camadas existirem:
 
 ```bash
 poetry run validate-silver-nyc-tlc --expected-days 365
 poetry run validate-silver-taxi-zone-lookup
 poetry run validate-silver-noaa-weather
-```
-
-A validacao Pos-Silver entra antes da Gold. Ela confirma que a tabela entregue
-pela Silver esta pronta para alimentar as camadas analiticas.
-
-Criar Gold diaria:
-
-```bash
-poetry run gold-daily-weather-demand \
-  --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
-```
-
-Validar a Gold diaria, base para EDA/ML:
-
-```bash
+poetry run validate-gold-star-schema
 poetry run validate-gold-daily-weather-demand
 ```
 
-Criar Gold dimensional:
+Testes automatizados:
 
 ```bash
-poetry run gold-star-schema \
-  --taxi-zone-lookup-input v2/data/delta/silver/nyc_tlc/taxi_zone_lookup \
-  --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
-```
-
-Validar a Gold dimensional:
-
-```bash
-poetry run validate-gold-star-schema
+poetry run python -m unittest discover -s tests -p 'test_*.py' -t .
 ```
 
 Visualizar a relacao clima x demanda:
@@ -402,7 +342,7 @@ fact_trips.localizacao_chegada_id_nulo = 0
 - V2.5 documenta o limite de clima diario e deixa V3 horaria como evolucao.
 - Gold diaria usando calendario completo de 2025 como base.
 - Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` enriquecida e `fact_trips`.
-- Wrappers Databricks para Ingestion, Bronze, Silver e Gold.
+- Wrappers Databricks para Ingestion, Bronze, Silver, Gold e validadores.
 
 ## Problemas da V1 Que a V2 Resolve
 
