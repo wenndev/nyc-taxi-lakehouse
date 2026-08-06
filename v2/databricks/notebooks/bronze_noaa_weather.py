@@ -61,11 +61,12 @@ from v2.pipelines.bronze.bronze_noaa_weather import (  # noqa: E402
     json_page_pattern,
     run_bronze_noaa_weather,
 )
+from v2.config.sources import NOAA_GHCND_NYC_STORAGE_ID  # noqa: E402
 
 # COMMAND ----------
 
 dbutils.widgets.text("year", "2025")
-dbutils.widgets.text("datasetid", "GHCND")
+dbutils.widgets.text("datasetid", NOAA_GHCND_NYC_STORAGE_ID)
 dbutils.widgets.text("input", "")
 dbutils.widgets.text("output", "")
 dbutils.widgets.text("mode", "overwrite")

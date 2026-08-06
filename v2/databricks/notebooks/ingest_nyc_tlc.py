@@ -84,7 +84,10 @@ overwrite = bool_widget("overwrite")
 dry_run = bool_widget("dry_run")
 
 validate_month_range(start_month, end_month)
-output_dir = resolve_output_dir(output, Path(f"/tmp/nyc_tlc/yellow/{year}"))
+if not output:
+    raise ValueError("Parameter 'output' is required.")
+
+output_dir = resolve_output_dir(output, Path(output))
 
 print(f"Output: {output_dir}")
 print(f"Year  : {year}")

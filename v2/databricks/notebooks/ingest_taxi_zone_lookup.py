@@ -87,10 +87,13 @@ exit_code = download_taxi_zone_lookup(
     dry_run=dry_run,
 )
 
+if exit_code != 0:
+    raise RuntimeError(f"Taxi Zone Lookup ingestion failed with exit code {exit_code}")
+
 dbutils.notebook.exit(
     json.dumps(
         {
-            "status": "success" if exit_code == 0 else "failed",
+            "status": "dry_run" if dry_run else "success",
             "output": str(output_dir),
             "overwrite": overwrite,
             "dry_run": dry_run,

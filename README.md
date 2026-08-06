@@ -21,19 +21,31 @@ A V1 gerou a Gold publicada no Kaggle:
 
 [NYC Taxi Trips 2024 - Gold Layer Star Schema](https://www.kaggle.com/datasets/delzin/nyc-taxi-trips-2024-gold-layer-star-schema)
 
-A V2 esta sendo desenvolvida em [v2/](v2/README.md). O historico tecnico da refatoracao esta em [v2/docs/historico_refatoracao_v2.md](v2/docs/historico_refatoracao_v2.md).
+A V2 esta sendo desenvolvida em [v2/](v2/README.md).
+
+Para entender o projeto do zero, leia primeiro:
+
+[v2/docs/00_visao_geral.md](v2/docs/00_visao_geral.md)
+
+Mapa da documentacao da V2:
+
+[v2/docs/README.md](v2/docs/README.md)
+
+Historico tecnico da refatoracao:
+
+[v2/docs/06_historico_refatoracao.md](v2/docs/06_historico_refatoracao.md)
 
 Plano de retorno para Azure com ADF orquestrando Databricks:
 
-[v2/docs/plano_cloud_adf_databricks.md](v2/docs/plano_cloud_adf_databricks.md)
+[v2/docs/04_orquestracao_adf_databricks.md](v2/docs/04_orquestracao_adf_databricks.md)
 
 Roteiro operacional para recriar a infraestrutura e executar a V2:
 
-[v2/docs/plano_execucao_azure_v2.md](v2/docs/plano_execucao_azure_v2.md)
+[v2/docs/03_plano_azure_databricks.md](v2/docs/03_plano_azure_databricks.md)
 
 Dicionario de dados da V2:
 
-[v2/docs/dicionario_dados_v2.md](v2/docs/dicionario_dados_v2.md)
+[v2/docs/02_dicionario_dados.md](v2/docs/02_dicionario_dados.md)
 
 ## Fontes
 
@@ -79,6 +91,10 @@ A regra principal da modelagem e que a `fact_trips` nao deve juntar diretamente
 com varias estacoes NOAA. Antes do join, o clima precisa ser consolidado para uma
 linha por dia. Isso evita duplicar corridas.
 
+Limite consciente da V2.5: o clima e diario. Portanto, 1 registro de clima
+representa todas as corridas daquele dia. Mudancas de clima ao longo do dia
+ficam planejadas para uma futura V3 com granularidade horaria.
+
 Modelagem proposta:
 
 [v2/docs/star_schema_v2.5.excalidraw](v2/docs/star_schema_v2.5.excalidraw)
@@ -107,16 +123,20 @@ v2/data/delta/silver/...
 v2/data/delta/gold/...
 ```
 
-No Azure depois, a ideia e trocar os caminhos locais por caminhos ADLS:
+No Azure depois, os dados ficam no ADLS. Nos notebooks Databricks, a opcao
+recomendada para os downloaders Python e usar caminhos de filesystem apoiados em
+ADLS, como Volumes:
 
 ```text
-abfss://raw@<storage>.dfs.core.windows.net/...
-abfss://lakehouse@<storage>.dfs.core.windows.net/bronze/...
-abfss://lakehouse@<storage>.dfs.core.windows.net/silver/...
-abfss://lakehouse@<storage>.dfs.core.windows.net/gold/...
+/Volumes/<catalog>/<schema>/<volume>/raw/...
+/Volumes/<catalog>/<schema>/<volume>/delta/bronze/...
+/Volumes/<catalog>/<schema>/<volume>/delta/silver/...
+/Volumes/<catalog>/<schema>/<volume>/delta/gold/...
 ```
 
-A logica PySpark deve ser reaproveitada. O que muda na cloud e principalmente configuracao, secrets, orquestracao e infraestrutura.
+Para leituras/escritas Spark tambem e possivel adaptar para caminhos cloud do
+ADLS. A logica PySpark deve ser reaproveitada. O que muda na cloud e
+principalmente configuracao, secrets, orquestracao e infraestrutura.
 
 ## Estrutura
 
@@ -379,6 +399,7 @@ fact_trips.localizacao_chegada_id_nulo = 0
 - Silver TLC com colunas temporais, duracao, distancia em km, pagamento, flags e categorias.
 - Silver NOAA com clima diario em uma linha por estacao/data.
 - Gold consolida a NOAA para uma linha de clima NYC por data.
+- V2.5 documenta o limite de clima diario e deixa V3 horaria como evolucao.
 - Gold diaria usando calendario completo de 2025 como base.
 - Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` enriquecida e `fact_trips`.
 - Wrappers Databricks para Ingestion, Bronze, Silver e Gold.
@@ -399,7 +420,7 @@ Na V2:
 
 ## Proximos Passos
 
-- Recriar infraestrutura Azure seguindo `v2/docs/plano_execucao_azure_v2.md`.
+- Recriar infraestrutura Azure seguindo `v2/docs/03_plano_azure_databricks.md`.
 - Executar Silver e Gold completas no Databricks.
 - Validar a `dim_localizacao` enriquecida na execucao full do Databricks.
 - Criar camada ML usando a Gold diaria.

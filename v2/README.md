@@ -6,37 +6,57 @@ Nesta versao, o projeto saiu do recorte de 2024 da V1 e passou a trabalhar com
 dados de 2025. A logica principal continua sendo Bronze, Silver e Gold, mas agora
 com codigo PySpark reaproveitavel localmente e depois no Azure Databricks.
 
-A V2.5 e o fluxo atual: buscar varias estacoes NOAA de NYC com paginacao,
-consolidar o clima por dia e manter a `dim_clima` com 1 linha por data.
+A V2.5 e o fluxo atual dentro da V2: buscar varias estacoes NOAA de NYC com
+paginacao, consolidar o clima por dia e manter a `dim_clima` com 1 linha por
+data. O nome V2.5 marca uma evolucao de modelagem dentro da V2, nao uma nova
+estrutura de projeto.
+
+Leia primeiro, para entender o projeto inteiro do zero:
+
+```text
+v2/docs/00_visao_geral.md
+```
+
+Mapa da documentacao:
+
+```text
+v2/docs/README.md
+```
 
 Historico tecnico da refatoracao:
 
 ```text
-v2/docs/historico_refatoracao_v2.md
+v2/docs/06_historico_refatoracao.md
 ```
 
 Plano cloud com ADF orquestrando Databricks:
 
 ```text
-v2/docs/plano_cloud_adf_databricks.md
+v2/docs/04_orquestracao_adf_databricks.md
 ```
 
 Roteiro operacional para recriar Azure e executar a V2:
 
 ```text
-v2/docs/plano_execucao_azure_v2.md
+v2/docs/03_plano_azure_databricks.md
+```
+
+Runbook de execucao local, dev e futura cloud:
+
+```text
+v2/docs/01_runbook_execucao.md
 ```
 
 Referencias praticas de Databricks, Spark e Azure:
 
 ```text
-v2/docs/referencias_databricks_spark_azure.md
+v2/docs/05_referencias_tecnicas.md
 ```
 
 Dicionario de dados da V2:
 
 ```text
-v2/docs/dicionario_dados_v2.md
+v2/docs/02_dicionario_dados.md
 ```
 
 Modelagem proposta V2.5:
@@ -44,6 +64,12 @@ Modelagem proposta V2.5:
 ```text
 v2/docs/star_schema_v2.5.excalidraw
 v2/docs/star_schema_v2.5.excalidraw.png
+```
+
+Arquitetura original da V1 mantida como referencia historica/comparativa:
+
+```text
+v2/docs/arquitetura_v1.jpg
 ```
 
 Importante: `v2/data/raw` e `v2/data/delta` nao sao versionados no Git. Para
@@ -95,6 +121,9 @@ v2/
       silver_nyc_tlc.py
       silver_taxi_zone_lookup.py
       silver_noaa_weather.py
+      validate_silver_nyc_tlc.py
+      validate_silver_taxi_zone_lookup.py
+      validate_silver_noaa_weather.py
       gold_daily_weather_demand.py
       validate_gold_daily_weather_demand.py
       gold_star_schema.py
@@ -122,6 +151,17 @@ v2/
       quarantine/
       monitoring/
 ```
+
+## Testes
+
+Rodar a suite automatizada da V2:
+
+```bash
+poetry run python -m unittest discover -s tests -p 'test_*.py' -t .
+```
+
+Os testes usam DataFrames Spark pequenos e validam regras de ingestion, Data
+Quality, Silver, Gold diaria e Star Schema.
 
 ## Ingestion
 
@@ -331,6 +371,22 @@ Resultado esperado para o ano completo:
 365 linhas
 1 linha por dia
 join por data entre demanda diaria e clima diario
+```
+
+Limite consciente da V2.5:
+
+```text
+1 registro de clima diario representa todas as corridas daquele dia.
+Mudancas de clima ao longo do dia nao sao modeladas nesta versao.
+```
+
+Evolucao futura V3:
+
+```text
+clima por hora ou faixa horaria
+demanda por hora
+join por data + hora
+possivel evolucao para clima por zona/borough usando estacao mais proxima
 ```
 
 Resultado esperado para a Gold dimensional:

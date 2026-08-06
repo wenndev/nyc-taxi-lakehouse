@@ -20,6 +20,9 @@ v2/databricks/notebooks/bronze_noaa_weather.py
 v2/databricks/notebooks/silver_nyc_tlc.py
 v2/databricks/notebooks/silver_taxi_zone_lookup.py
 v2/databricks/notebooks/silver_noaa_weather.py
+v2/databricks/notebooks/validate_silver_nyc_tlc.py
+v2/databricks/notebooks/validate_silver_taxi_zone_lookup.py
+v2/databricks/notebooks/validate_silver_noaa_weather.py
 v2/databricks/notebooks/gold_daily_weather_demand.py
 v2/databricks/notebooks/validate_gold_daily_weather_demand.py
 v2/databricks/notebooks/gold_star_schema.py
@@ -38,10 +41,13 @@ v2/databricks/notebooks/validate_gold_star_schema.py
 7. silver_nyc_tlc
 8. silver_taxi_zone_lookup
 9. silver_noaa_weather
-10. gold_daily_weather_demand
-11. validate_gold_daily_weather_demand
-12. gold_star_schema
-13. validate_gold_star_schema
+10. validate_silver_nyc_tlc
+11. validate_silver_taxi_zone_lookup
+12. validate_silver_noaa_weather
+13. gold_star_schema
+14. validate_gold_star_schema
+15. gold_daily_weather_demand
+16. validate_gold_daily_weather_demand
 ```
 
 Os notebooks de Bronze, Silver e Gold reutilizam as funcoes PySpark em
@@ -292,57 +298,72 @@ skip_quality=false
 Se o Data Quality retornar `FAIL`, a Silver NOAA nao e publicada e o job deve
 falhar de forma controlada.
 
-### Gold Daily Weather Demand
-
-Parametros principais no ADF:
-
-```text
-year
-tlc_input
-noaa_input
-taxi_zone_lookup_input
-output
-mode
-skip_count
-dry_run
-```
-
-Exemplo:
-
-```text
-tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
-noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
-output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
-```
-
-### Validate Gold Daily Weather Demand
+### Validate Silver NYC TLC
 
 Parametros principais no ADF:
 
 ```text
 year
 input
+min_rows
 expected_days
-min_days_with_demand
-min_total_trips
-allow_incomplete_weather
 dry_run
 ```
 
 Exemplo:
 
 ```text
-year=2025
-input=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
+input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
 expected_days=365
-min_days_with_demand=1
-min_total_trips=1
-allow_incomplete_weather=false
-dry_run=false
 ```
 
-Esse notebook valida a base diaria usada em EDA/ML. Se retornar `FAIL`, o
-notebook falha e o ADF marca o pipeline como falho.
+Esse notebook valida a Silver TLC publicada. Se retornar `FAIL`, o notebook
+falha e o ADF nao deve seguir para a Gold.
+
+### Validate Silver Taxi Zone Lookup
+
+Parametros principais no ADF:
+
+```text
+input
+expected_locations
+dry_run
+```
+
+Exemplo:
+
+```text
+input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/taxi_zone_lookup
+expected_locations=265
+```
+
+Esse notebook valida a referencia de localizacao usada pela `dim_localizacao`.
+
+### Validate Silver NOAA Weather
+
+Parametros principais no ADF:
+
+```text
+year
+datasetid
+input
+expected_days
+min_rows
+min_stations
+dry_run
+```
+
+Exemplo:
+
+```text
+input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
+expected_days=365
+min_rows=365
+min_stations=2
+```
+
+Esse notebook valida a cobertura climatica antes da Gold. Se retornar `FAIL`, a
+`dim_clima` pode ficar incompleta e o pipeline deve parar.
 
 ### Gold Star Schema
 
@@ -393,8 +414,59 @@ allow_incomplete_weather=false
 dry_run=false
 ```
 
-Esse notebook deve ser a ultima etapa da Gold dimensional. Se a validacao retornar
-`FAIL`, o notebook falha e o ADF marca o pipeline como falho.
+Esse notebook valida a Gold dimensional. Se a validacao retornar `FAIL`, o
+notebook falha e o ADF marca o pipeline como falho.
+
+### Gold Daily Weather Demand
+
+Parametros principais no ADF:
+
+```text
+year
+tlc_input
+noaa_input
+output
+mode
+skip_count
+dry_run
+```
+
+Exemplo:
+
+```text
+tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
+noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
+output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
+```
+
+### Validate Gold Daily Weather Demand
+
+Parametros principais no ADF:
+
+```text
+year
+input
+expected_days
+min_days_with_demand
+min_total_trips
+allow_incomplete_weather
+dry_run
+```
+
+Exemplo:
+
+```text
+year=2025
+input=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
+expected_days=365
+min_days_with_demand=1
+min_total_trips=1
+allow_incomplete_weather=false
+dry_run=false
+```
+
+Esse notebook valida a base diaria usada em EDA/ML. Se retornar `FAIL`, o
+notebook falha e o ADF marca o pipeline como falho.
 
 ## Uso Pelo ADF
 

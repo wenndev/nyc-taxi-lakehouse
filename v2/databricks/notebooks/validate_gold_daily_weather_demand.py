@@ -128,7 +128,8 @@ if dry_run:
                 "expected_days": config.expected_days,
                 "min_days_with_demand": config.min_days_with_demand,
                 "min_total_trips": config.min_total_trips,
-            }
+            },
+            default=str,
         )
     )
 
@@ -157,6 +158,6 @@ payload = {
 }
 
 if not result.passed:
-    raise RuntimeError(json.dumps(payload))
+    raise RuntimeError(json.dumps(payload, default=str))
 
-dbutils.notebook.exit(json.dumps(payload))
+dbutils.notebook.exit(json.dumps(payload, default=str))

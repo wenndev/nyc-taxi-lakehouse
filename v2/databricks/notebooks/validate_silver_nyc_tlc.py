@@ -1,12 +1,12 @@
 # Databricks notebook source
 # Resumo:
-# - Wrapper Databricks para validar a Gold Star Schema.
-# - Deve ser executado depois da Gold para falhar o job se houver inconsistencia.
+# - Wrapper Databricks para validar a Silver da NYC TLC.
+# - Deve ser executado depois da Silver TLC para falhar o job se houver erro.
 
 # MAGIC %md
-# MAGIC # Validate Gold Star Schema
+# MAGIC # Validate Silver NYC TLC
 # MAGIC
-# MAGIC Wrapper Databricks para validar a Gold dimensional da V2.
+# MAGIC Wrapper Databricks para validar a Silver da NYC TLC antes da Gold.
 
 # COMMAND ----------
 
@@ -57,21 +57,20 @@ spark = get_spark()
 
 # COMMAND ----------
 
-from v2.pipelines.gold.validate_gold_star_schema import (  # noqa: E402
-    GoldValidationConfig,
-    days_in_year,
+from v2.pipelines.silver.validate_silver_nyc_tlc import (  # noqa: E402
+    SilverNYCTLCValidationConfig,
+    run_silver_nyc_tlc_validation,
+)
+from v2.pipelines.silver.validate_silver_common import (  # noqa: E402
     print_validation_result,
-    run_gold_star_schema_validation,
 )
 
 # COMMAND ----------
 
 dbutils.widgets.text("year", "2025")
 dbutils.widgets.text("input", "")
+dbutils.widgets.text("min_rows", "1")
 dbutils.widgets.text("expected_days", "")
-dbutils.widgets.text("expected_locations", "265")
-dbutils.widgets.text("min_fact_rows", "1")
-dbutils.widgets.text("allow_incomplete_weather", "false")
 dbutils.widgets.text("dry_run", "false")
 
 # COMMAND ----------
@@ -92,31 +91,25 @@ def bool_widget(name: str) -> bool:
 
 year = int(widget("year"))
 input_path = optional_widget("input")
+min_rows = int(widget("min_rows"))
 expected_days = (
-    int(widget("expected_days"))
-    if optional_widget("expected_days")
-    else days_in_year(year)
+    int(widget("expected_days")) if optional_widget("expected_days") else None
 )
-expected_locations = int(widget("expected_locations"))
-min_fact_rows = int(widget("min_fact_rows"))
-allow_incomplete_weather = bool_widget("allow_incomplete_weather")
 dry_run = bool_widget("dry_run")
 
 if not input_path:
     raise ValueError("Parameter 'input' is required.")
 
-config = GoldValidationConfig(
+config = SilverNYCTLCValidationConfig(
+    year=year,
+    min_rows=min_rows,
     expected_days=expected_days,
-    expected_locations=expected_locations,
-    min_fact_rows=min_fact_rows,
-    require_complete_weather=not allow_incomplete_weather,
 )
 
-print(f"Input             : {input_path}")
-print(f"Year              : {year}")
-print(f"Expected days     : {config.expected_days}")
-print(f"Expected locations: {config.expected_locations}")
-print(f"Min fact rows     : {config.min_fact_rows}")
+print(f"Input        : {input_path}")
+print(f"Year         : {config.year}")
+print(f"Min rows     : {config.min_rows}")
+print(f"Expected days: {config.expected_days or 'not enforced'}")
 
 if dry_run:
     dbutils.notebook.exit(
@@ -125,19 +118,19 @@ if dry_run:
                 "status": "dry_run",
                 "input": input_path,
                 "year": year,
-                "expected_days": config.expected_days,
-                "expected_locations": config.expected_locations,
+                "min_rows": min_rows,
+                "expected_days": expected_days,
             },
             default=str,
         )
     )
 
-result = run_gold_star_schema_validation(
+result = run_silver_nyc_tlc_validation(
     spark=spark,
     input_path=input_path,
     config=config,
 )
-print_validation_result(result)
+print_validation_result(result, title="Silver NYC TLC validation")
 
 payload = {
     "status": result.status,

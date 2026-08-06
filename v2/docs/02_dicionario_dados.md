@@ -294,6 +294,13 @@ Antes, a NOAA e consolidada para 1 linha por data.
 Isso evita duplicar corridas.
 ```
 
+Limite da V2.5:
+
+```text
+O clima e diario. Todas as corridas da mesma data recebem o mesmo clima_id.
+Mudancas de clima ao longo do dia ficam para uma futura V3 horaria.
+```
+
 | Coluna | Tipo logico | Descricao |
 |---|---:|---|
 | `clima_id` | integer | Chave do clima, no formato `yyyyMMdd`. |
@@ -387,6 +394,13 @@ Uso principal:
 
 ```text
 Responder se condicoes climaticas afetam a demanda por taxi em Nova York.
+```
+
+Limite:
+
+```text
+A analise desta tabela e diaria. Ela nao mede mudancas de demanda dentro do dia
+apos uma mudanca climatica especifica.
 ```
 
 | Coluna | Tipo logico | Descricao |

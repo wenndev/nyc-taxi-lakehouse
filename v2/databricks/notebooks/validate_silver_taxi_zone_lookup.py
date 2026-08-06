@@ -1,12 +1,12 @@
 # Databricks notebook source
 # Resumo:
-# - Wrapper Databricks para validar a Gold Star Schema.
-# - Deve ser executado depois da Gold para falhar o job se houver inconsistencia.
+# - Wrapper Databricks para validar a Silver do Taxi Zone Lookup.
+# - Deve ser executado depois da Silver Lookup para garantir a dim_localizacao.
 
 # MAGIC %md
-# MAGIC # Validate Gold Star Schema
+# MAGIC # Validate Silver Taxi Zone Lookup
 # MAGIC
-# MAGIC Wrapper Databricks para validar a Gold dimensional da V2.
+# MAGIC Wrapper Databricks para validar a referencia de localizacao da NYC TLC.
 
 # COMMAND ----------
 
@@ -57,21 +57,18 @@ spark = get_spark()
 
 # COMMAND ----------
 
-from v2.pipelines.gold.validate_gold_star_schema import (  # noqa: E402
-    GoldValidationConfig,
-    days_in_year,
+from v2.pipelines.silver.validate_silver_common import (  # noqa: E402
     print_validation_result,
-    run_gold_star_schema_validation,
+)
+from v2.pipelines.silver.validate_silver_taxi_zone_lookup import (  # noqa: E402
+    SilverTaxiZoneLookupValidationConfig,
+    run_silver_taxi_zone_lookup_validation,
 )
 
 # COMMAND ----------
 
-dbutils.widgets.text("year", "2025")
 dbutils.widgets.text("input", "")
-dbutils.widgets.text("expected_days", "")
 dbutils.widgets.text("expected_locations", "265")
-dbutils.widgets.text("min_fact_rows", "1")
-dbutils.widgets.text("allow_incomplete_weather", "false")
 dbutils.widgets.text("dry_run", "false")
 
 # COMMAND ----------
@@ -90,33 +87,19 @@ def bool_widget(name: str) -> bool:
     return widget(name).lower() in {"1", "true", "yes", "y", "sim"}
 
 
-year = int(widget("year"))
 input_path = optional_widget("input")
-expected_days = (
-    int(widget("expected_days"))
-    if optional_widget("expected_days")
-    else days_in_year(year)
-)
 expected_locations = int(widget("expected_locations"))
-min_fact_rows = int(widget("min_fact_rows"))
-allow_incomplete_weather = bool_widget("allow_incomplete_weather")
 dry_run = bool_widget("dry_run")
 
 if not input_path:
     raise ValueError("Parameter 'input' is required.")
 
-config = GoldValidationConfig(
-    expected_days=expected_days,
+config = SilverTaxiZoneLookupValidationConfig(
     expected_locations=expected_locations,
-    min_fact_rows=min_fact_rows,
-    require_complete_weather=not allow_incomplete_weather,
 )
 
 print(f"Input             : {input_path}")
-print(f"Year              : {year}")
-print(f"Expected days     : {config.expected_days}")
 print(f"Expected locations: {config.expected_locations}")
-print(f"Min fact rows     : {config.min_fact_rows}")
 
 if dry_run:
     dbutils.notebook.exit(
@@ -124,25 +107,22 @@ if dry_run:
             {
                 "status": "dry_run",
                 "input": input_path,
-                "year": year,
-                "expected_days": config.expected_days,
-                "expected_locations": config.expected_locations,
+                "expected_locations": expected_locations,
             },
             default=str,
         )
     )
 
-result = run_gold_star_schema_validation(
+result = run_silver_taxi_zone_lookup_validation(
     spark=spark,
     input_path=input_path,
     config=config,
 )
-print_validation_result(result)
+print_validation_result(result, title="Silver Taxi Zone Lookup validation")
 
 payload = {
     "status": result.status,
     "input": input_path,
-    "year": year,
     "checks": [
         {
             "name": check.name,

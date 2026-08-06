@@ -155,10 +155,10 @@ secret_key = optional_widget("secret_key")
 start_date, end_date = resolve_date_range(year, args.start_date, args.end_date)
 validate_args(args, datatypes)
 
-output_dir = resolve_output_dir(
-    output,
-    Path(f"/tmp/noaa/{storage_datasetid.lower()}/{year}"),
-)
+if not output:
+    raise ValueError("Parameter 'output' is required.")
+
+output_dir = resolve_output_dir(output, Path(output))
 base_params = build_base_params(
     datasetid=datasetid,
     datatypes=datatypes,

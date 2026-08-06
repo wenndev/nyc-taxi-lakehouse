@@ -153,3 +153,7 @@ estaveis para execucao local e Databricks.
 Regra importante: a `fact_trips` nao junta diretamente com varias estacoes NOAA.
 A `dim_clima` e criada depois da consolidacao diaria, mantendo 1 `clima_id` por
 data e evitando duplicacao de corridas.
+
+Limite da V2.5: o clima e diario. Portanto, todas as corridas de uma mesma data
+recebem o mesmo `clima_id`. Mudancas de clima ao longo do dia ficam para uma V3,
+com clima e demanda em grao horario ou por faixa horaria.

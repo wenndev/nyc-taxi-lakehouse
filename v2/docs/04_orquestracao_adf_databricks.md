@@ -3,6 +3,10 @@
 Escolha definida: o Azure Data Factory vai orquestrar, mas a logica de ingestao
 e paginacao fica no Databricks/Python.
 
+A modelagem climatica da V2.5 e diaria: varias estacoes NOAA de NYC sao
+consolidadas em 1 registro de clima por data antes de ligar clima com corridas.
+Analise horaria fica planejada para uma futura V3.
+
 ## Desenho
 
 ```text
@@ -173,8 +177,13 @@ dry_run=false
 7. `silver-nyc-tlc` com Data Quality TLC
 8. `silver-taxi-zone-lookup` com Data Quality Lookup
 9. `silver-noaa-weather` com Data Quality NOAA
-10. `gold-daily-weather-demand`
-11. `gold-star-schema`
+10. `validate-silver-nyc-tlc`
+11. `validate-silver-taxi-zone-lookup`
+12. `validate-silver-noaa-weather`
+13. `gold-star-schema`
+14. `validate-gold-star-schema`
+15. `gold-daily-weather-demand`
+16. `validate-gold-daily-weather-demand`
 
 ## O Que Ainda Falta Fazer Quando o Azure Voltar
 
@@ -187,9 +196,10 @@ dry_run=false
 - Ajustar parametros de caminhos para apontar para a cloud.
 - Passar `quarantine_output`, `metrics_output` e `pipeline_run_id` para as
   Silvers TLC, Taxi Zone Lookup e NOAA no Databricks.
+- Configurar os notebooks `validate_silver_*` como gates depois da Silver.
 
 Roteiro operacional detalhado:
 
 ```text
-v2/docs/plano_execucao_azure_v2.md
+v2/docs/03_plano_azure_databricks.md
 ```

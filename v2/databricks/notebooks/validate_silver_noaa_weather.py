@@ -1,12 +1,12 @@
 # Databricks notebook source
 # Resumo:
-# - Wrapper Databricks para validar a Gold Star Schema.
-# - Deve ser executado depois da Gold para falhar o job se houver inconsistencia.
+# - Wrapper Databricks para validar a Silver NOAA.
+# - Deve ser executado depois da Silver NOAA para garantir cobertura climatica.
 
 # MAGIC %md
-# MAGIC # Validate Gold Star Schema
+# MAGIC # Validate Silver NOAA Weather
 # MAGIC
-# MAGIC Wrapper Databricks para validar a Gold dimensional da V2.
+# MAGIC Wrapper Databricks para validar a Silver NOAA antes da Gold.
 
 # COMMAND ----------
 
@@ -57,21 +57,24 @@ spark = get_spark()
 
 # COMMAND ----------
 
-from v2.pipelines.gold.validate_gold_star_schema import (  # noqa: E402
-    GoldValidationConfig,
+from v2.config.sources import NOAA_GHCND_NYC_STORAGE_ID  # noqa: E402
+from v2.pipelines.silver.validate_silver_common import (  # noqa: E402
     days_in_year,
     print_validation_result,
-    run_gold_star_schema_validation,
+)
+from v2.pipelines.silver.validate_silver_noaa_weather import (  # noqa: E402
+    SilverNOAAValidationConfig,
+    run_silver_noaa_weather_validation,
 )
 
 # COMMAND ----------
 
 dbutils.widgets.text("year", "2025")
+dbutils.widgets.text("datasetid", NOAA_GHCND_NYC_STORAGE_ID)
 dbutils.widgets.text("input", "")
 dbutils.widgets.text("expected_days", "")
-dbutils.widgets.text("expected_locations", "265")
-dbutils.widgets.text("min_fact_rows", "1")
-dbutils.widgets.text("allow_incomplete_weather", "false")
+dbutils.widgets.text("min_rows", "365")
+dbutils.widgets.text("min_stations", "2")
 dbutils.widgets.text("dry_run", "false")
 
 # COMMAND ----------
@@ -91,32 +94,33 @@ def bool_widget(name: str) -> bool:
 
 
 year = int(widget("year"))
+datasetid = widget("datasetid")
 input_path = optional_widget("input")
 expected_days = (
     int(widget("expected_days"))
     if optional_widget("expected_days")
     else days_in_year(year)
 )
-expected_locations = int(widget("expected_locations"))
-min_fact_rows = int(widget("min_fact_rows"))
-allow_incomplete_weather = bool_widget("allow_incomplete_weather")
+min_rows = int(widget("min_rows"))
+min_stations = int(widget("min_stations"))
 dry_run = bool_widget("dry_run")
 
 if not input_path:
     raise ValueError("Parameter 'input' is required.")
 
-config = GoldValidationConfig(
+config = SilverNOAAValidationConfig(
+    year=year,
     expected_days=expected_days,
-    expected_locations=expected_locations,
-    min_fact_rows=min_fact_rows,
-    require_complete_weather=not allow_incomplete_weather,
+    min_rows=min_rows,
+    min_stations=min_stations,
 )
 
-print(f"Input             : {input_path}")
-print(f"Year              : {year}")
-print(f"Expected days     : {config.expected_days}")
-print(f"Expected locations: {config.expected_locations}")
-print(f"Min fact rows     : {config.min_fact_rows}")
+print(f"Input         : {input_path}")
+print(f"Dataset       : {datasetid}")
+print(f"Year          : {config.year}")
+print(f"Expected days : {config.expected_days}")
+print(f"Min rows      : {config.min_rows}")
+print(f"Min stations  : {config.min_stations}")
 
 if dry_run:
     dbutils.notebook.exit(
@@ -124,24 +128,27 @@ if dry_run:
             {
                 "status": "dry_run",
                 "input": input_path,
+                "datasetid": datasetid,
                 "year": year,
-                "expected_days": config.expected_days,
-                "expected_locations": config.expected_locations,
+                "expected_days": expected_days,
+                "min_rows": min_rows,
+                "min_stations": min_stations,
             },
             default=str,
         )
     )
 
-result = run_gold_star_schema_validation(
+result = run_silver_noaa_weather_validation(
     spark=spark,
     input_path=input_path,
     config=config,
 )
-print_validation_result(result)
+print_validation_result(result, title="Silver NOAA Weather validation")
 
 payload = {
     "status": result.status,
     "input": input_path,
+    "datasetid": datasetid,
     "year": year,
     "checks": [
         {

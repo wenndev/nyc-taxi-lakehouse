@@ -464,7 +464,8 @@ O que deve ser reaproveitado:
 - Executar Silver TLC completa no Databricks.
 - Executar Gold completa no Databricks.
 - Validar `dim_localizacao` enriquecida com Taxi Zone Lookup na Gold completa.
-- Planejar dataset analitico para ML.
+- Treinar/analisar ML usando a Gold diaria completa no Databricks.
+- Evoluir uma futura V3 com clima por hora ou faixa horaria.
 - Planejar pipelines incrementais.
 - Planejar particionamento Bronze.
 - Implementar infraestrutura Azure novamente.

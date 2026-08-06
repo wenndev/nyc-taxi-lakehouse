@@ -221,7 +221,7 @@ isolados em quarentena e a qualidade ficou acima do limite minimo de publicacao.
 poetry run python -m unittest tests.v2.pipelines.quality.test_noaa_validator
 poetry run python -m unittest tests.v2.pipelines.quality.test_tlc_validator
 poetry run python -m unittest tests.v2.pipelines.quality.test_taxi_zone_lookup_validator
-poetry run python -m unittest discover tests
+poetry run python -m unittest discover -s tests -p 'test_*.py' -t .
 ```
 
 Os testes usam pequenos DataFrames Spark locais e nao acessam API externa nem Azure.
