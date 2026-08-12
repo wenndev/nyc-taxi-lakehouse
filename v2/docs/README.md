@@ -2,15 +2,34 @@
 
 Esta pasta guarda a documentacao da refatoracao V2 / V2.5 do projeto.
 
-## Ordem Recomendada De Leitura
+## Como Usar Esta Pasta
 
-1. `00_visao_geral.md`
-2. `01_runbook_execucao.md`
-3. `02_dicionario_dados.md`
-4. `03_plano_azure_databricks.md`
-5. `04_orquestracao_adf_databricks.md`
-6. `05_referencias_tecnicas.md`
-7. `06_historico_refatoracao.md`
+Aqui ficam os documentos longos da V2. Esta pasta nao substitui os READMEs das
+camadas em `v2/pipelines/`; aqueles explicam os scripts por etapa, incluindo o
+fluxo dev local.
+
+Para estudar o projeto inteiro, comece pelo `README.md` da raiz e depois pelo
+`v2/README.md`.
+
+## Ordem Dentro De `v2/docs`
+
+1. `00_visao_geral.md` - historia, problema da V1 e solucao V2/V2.5.
+2. `02_dicionario_dados.md` - campos e regras de negocio.
+3. `01_runbook_execucao.md` - como executar e validar.
+4. `03_plano_azure_databricks.md` - plano de infraestrutura cloud.
+5. `04_orquestracao_adf_databricks.md` - ADF chamando Databricks.
+6. `05_referencias_tecnicas.md` - notas praticas de Spark, Delta e Azure.
+7. `06_historico_refatoracao.md` - diario tecnico da refatoracao.
+
+Resumo da logica:
+
+```text
+1. Entender a historia e a modelagem.
+2. Entender tabelas e campos.
+3. Executar local/dev.
+4. Planejar Azure/Databricks.
+5. Consultar referencias e historico quando precisar.
+```
 
 ## Arquivos
 
@@ -44,6 +63,9 @@ validadores
 parametros ADF
 troubleshooting
 ```
+
+Leia depois de entender a estrutura. O runbook e para rodar o projeto, nao para
+ser o primeiro contato com a logica.
 
 ### `02_dicionario_dados.md`
 

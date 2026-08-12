@@ -11,52 +11,38 @@ paginacao, consolidar o clima por dia e manter a `dim_clima` com 1 linha por
 data. O nome V2.5 marca uma evolucao de modelagem dentro da V2, nao uma nova
 estrutura de projeto.
 
-Leia primeiro, para entender o projeto inteiro do zero:
+## Como Ler Esta V2
+
+Se voce esta estudando o projeto, siga esta trilha:
 
 ```text
-v2/docs/00_visao_geral.md
+1. README.md
+2. v2/README.md
+3. v2/docs/00_visao_geral.md
+4. v2/docs/02_dicionario_dados.md
+5. v2/pipelines/ingestion/README.md
+6. v2/pipelines/bronze/README.md
+7. v2/pipelines/silver/README.md
+8. v2/pipelines/quality/README.md
+9. v2/pipelines/gold/README.md
+10. v2/pipelines/dev/README.md
+11. v2/docs/01_runbook_execucao.md
+12. v2/databricks/README.md
+13. v2/docs/03_plano_azure_databricks.md
+14. v2/docs/04_orquestracao_adf_databricks.md
 ```
 
-Mapa da documentacao:
+Mapa da pasta de documentos:
 
 ```text
 v2/docs/README.md
 ```
 
-Historico tecnico da refatoracao:
-
-```text
-v2/docs/06_historico_refatoracao.md
-```
-
-Plano cloud com ADF orquestrando Databricks:
-
-```text
-v2/docs/04_orquestracao_adf_databricks.md
-```
-
-Roteiro operacional para recriar Azure e executar a V2:
-
-```text
-v2/docs/03_plano_azure_databricks.md
-```
-
-Runbook de execucao local, dev e futura cloud:
-
-```text
-v2/docs/01_runbook_execucao.md
-```
-
-Referencias praticas de Databricks, Spark e Azure:
+Documentos de apoio:
 
 ```text
 v2/docs/05_referencias_tecnicas.md
-```
-
-Dicionario de dados da V2:
-
-```text
-v2/docs/02_dicionario_dados.md
+v2/docs/06_historico_refatoracao.md
 ```
 
 Modelagem proposta V2.5:
@@ -75,11 +61,12 @@ v2/docs/arquitetura_v1.jpg
 Importante: `v2/data/raw` e `v2/data/delta` nao sao versionados no Git. Para
 continuar em outra maquina, rebaixe os dados ou copie essas pastas manualmente.
 
-## Estrutura inicial
+## Estrutura Principal
 
 ```text
 v2/
   config/
+    spark.py
     paths.py
     sources.py
 
@@ -102,14 +89,18 @@ v2/
       validate_silver_common.py
     quality/
       config.py
+      exceptions.py
       models.py
       validators.py
       storage.py
     gold/
-      gold_daily_weather_demand.py
-      validate_gold_daily_weather_demand.py
+      weather_consolidation.py
       gold_star_schema.py
       validate_gold_star_schema.py
+      gold_daily_weather_demand.py
+      validate_gold_daily_weather_demand.py
+    dev/
+      run_dev_sample.py
   databricks/
     notebooks/
       ingest_nyc_tlc.py
@@ -124,10 +115,10 @@ v2/
       validate_silver_nyc_tlc.py
       validate_silver_taxi_zone_lookup.py
       validate_silver_noaa_weather.py
-      gold_daily_weather_demand.py
-      validate_gold_daily_weather_demand.py
       gold_star_schema.py
       validate_gold_star_schema.py
+      gold_daily_weather_demand.py
+      validate_gold_daily_weather_demand.py
 
   notebooks/
     01_inspect_bronze_nyc_tlc.ipynb
@@ -148,6 +139,8 @@ v2/
       bronze/
       silver/
       gold/
+        star_schema/
+        daily_weather_demand/
       quarantine/
       monitoring/
 ```
@@ -162,6 +155,16 @@ poetry run python -m unittest discover -s tests -p 'test_*.py' -t .
 
 Os testes usam DataFrames Spark pequenos e validam regras de ingestion, Data
 Quality, Silver, Gold diaria e Star Schema.
+
+Rodar o fluxo dev local de ponta a ponta:
+
+```bash
+poetry run run-v2-dev-sample --dry-run
+poetry run run-v2-dev-sample
+```
+
+Esse comando valida uma amostra da TLC e reaproveita Silver NOAA e Taxi Zone
+Lookup ja publicadas localmente.
 
 ## Ingestion
 
@@ -310,21 +313,16 @@ Para amostra local, informe a quantidade esperada de dias da amostra ou remova
 
 ## Gold
 
-A primeira Gold V2 alinha todos os dias de 2025 usando um calendario completo como
-base. Ela junta demanda diaria da TLC com clima diario da NOAA.
+A Gold V2 tem duas saidas principais:
 
-```bash
-poetry run gold-daily-weather-demand --dry-run
-poetry run gold-daily-weather-demand \
-  --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
+```text
+gold/star_schema/2025
+gold/daily_weather_demand/2025
 ```
 
-Validar a Gold diaria, base para EDA/ML:
-
-```bash
-poetry run validate-gold-daily-weather-demand --dry-run
-poetry run validate-gold-daily-weather-demand
-```
+O Star Schema e a entrega dimensional principal para BI. A
+`daily_weather_demand` e uma tabela diaria para EDA/ML. As duas saidas leem dados
+da Silver; a tabela diaria nao depende fisicamente do Star Schema.
 
 Criar Gold dimensional:
 
@@ -342,20 +340,27 @@ poetry run validate-gold-star-schema --dry-run
 poetry run validate-gold-star-schema
 ```
 
+Criar Gold diaria:
+
+```bash
+poetry run gold-daily-weather-demand --dry-run
+poetry run gold-daily-weather-demand \
+  --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025
+```
+
+Validar a Gold diaria, base para EDA/ML:
+
+```bash
+poetry run validate-gold-daily-weather-demand --dry-run
+poetry run validate-gold-daily-weather-demand
+```
+
 Teste local leve com amostra da TLC:
 
 ```bash
-poetry run gold-daily-weather-demand \
-  --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
-  --output v2/data/delta/dev/gold/daily_weather_demand/2025_01
-
-poetry run validate-gold-daily-weather-demand \
-  --input v2/data/delta/dev/gold/daily_weather_demand/2025_01 \
-  --min-days-with-demand 1 \
-  --min-total-trips 1
-
 poetry run gold-star-schema \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
+  --taxi-zone-lookup-input v2/data/delta/silver/nyc_tlc/taxi_zone_lookup \
   --output v2/data/delta/dev/gold/star_schema/2025_01 \
   --skip-count
 
@@ -363,6 +368,16 @@ poetry run validate-gold-star-schema \
   --input v2/data/delta/dev/gold/star_schema/2025_01 \
   --expected-locations 265 \
   --min-fact-rows 1
+
+poetry run gold-daily-weather-demand \
+  --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
+  --output v2/data/delta/dev/gold/daily_weather_demand/2025_01 \
+  --skip-count
+
+poetry run validate-gold-daily-weather-demand \
+  --input v2/data/delta/dev/gold/daily_weather_demand/2025_01 \
+  --min-days-with-demand 1 \
+  --min-total-trips 1
 ```
 
 Resultado esperado para o ano completo:
@@ -436,7 +451,7 @@ Gold Star Schema dev:
 dim_data = 365
 dim_clima = 365
 dim_localizacao = 265
-fact_trips = 97065
+fact_trips = 97060
 fact_trips.clima_id_nulo = 0
 ```
 

@@ -511,8 +511,8 @@ Gold Star Schema dev com amostra TLC:
 ```text
 dim_data = 365
 dim_clima = 365
-dim_localizacao = 254
-fact_trips = 97065
+dim_localizacao = 265
+fact_trips = 97060
 fact_trips.data_id_nulo = 0
 fact_trips.clima_id_nulo = 0
 fact_trips.localizacao_partida_id_nulo = 0

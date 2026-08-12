@@ -35,6 +35,7 @@ gold-daily-weather-demand = "v2.pipelines.gold.gold_daily_weather_demand:main"
 gold-star-schema = "v2.pipelines.gold.gold_star_schema:main"
 validate-gold-daily-weather-demand = "v2.pipelines.gold.validate_gold_daily_weather_demand:main"
 validate-gold-star-schema = "v2.pipelines.gold.validate_gold_star_schema:main"
+run-v2-dev-sample = "v2.pipelines.dev.run_dev_sample:main"
 
 [tool.poetry]
 packages = [

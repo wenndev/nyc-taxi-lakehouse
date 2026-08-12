@@ -23,10 +23,10 @@ v2/databricks/notebooks/silver_noaa_weather.py
 v2/databricks/notebooks/validate_silver_nyc_tlc.py
 v2/databricks/notebooks/validate_silver_taxi_zone_lookup.py
 v2/databricks/notebooks/validate_silver_noaa_weather.py
-v2/databricks/notebooks/gold_daily_weather_demand.py
-v2/databricks/notebooks/validate_gold_daily_weather_demand.py
 v2/databricks/notebooks/gold_star_schema.py
 v2/databricks/notebooks/validate_gold_star_schema.py
+v2/databricks/notebooks/gold_daily_weather_demand.py
+v2/databricks/notebooks/validate_gold_daily_weather_demand.py
 ```
 
 ## Ordem Do Pipeline

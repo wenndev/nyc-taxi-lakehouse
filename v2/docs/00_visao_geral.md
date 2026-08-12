@@ -731,15 +731,20 @@ OK
 
 ## 22. Como Ler O Projeto
 
-Ordem recomendada:
+Ordem recomendada para estudar o projeto:
 
 ```text
-1. v2/docs/00_visao_geral.md
+1. README.md
 2. v2/README.md
-3. v2/docs/01_runbook_execucao.md
+3. v2/docs/00_visao_geral.md
 4. v2/docs/02_dicionario_dados.md
-5. v2/docs/03_plano_azure_databricks.md
-6. v2/databricks/README.md
+5. READMEs das camadas em v2/pipelines/
+6. v2/docs/01_runbook_execucao.md
+7. v2/databricks/README.md
+8. v2/docs/03_plano_azure_databricks.md
+9. v2/docs/04_orquestracao_adf_databricks.md
+10. v2/docs/05_referencias_tecnicas.md
+11. v2/docs/06_historico_refatoracao.md
 ```
 
 Ordem para ler o codigo:
@@ -754,7 +759,8 @@ Ordem para ler o codigo:
 7. v2/pipelines/gold/weather_consolidation.py
 8. v2/pipelines/gold/gold_star_schema.py
 9. v2/pipelines/gold/gold_daily_weather_demand.py
-10. v2/databricks/notebooks/
+10. v2/pipelines/dev/run_dev_sample.py
+11. v2/databricks/notebooks/
 ```
 
 Frase principal para lembrar:

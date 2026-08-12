@@ -2,63 +2,16 @@
 
 A Gold V2 junta dados tratados da Silver em tabelas analiticas.
 
-## Daily Weather Demand
-
-Esta tabela usa um calendario completo do ano como base e alinha:
-
-- demanda diaria da NYC TLC;
-- clima diario da NOAA;
-- flags para dias sem corrida ou sem clima.
-
-Entrada:
+Saidas principais:
 
 ```text
-v2/data/delta/silver/nyc_tlc/yellow/2025
-v2/data/delta/silver/noaa/ghcnd_nyc/2025
-```
-
-Saida:
-
-```text
+v2/data/delta/gold/star_schema/2025
 v2/data/delta/gold/daily_weather_demand/2025
 ```
 
-Comando:
-
-```bash
-poetry run gold-daily-weather-demand --dry-run
-poetry run gold-daily-weather-demand
-```
-
-Validacao automatica depois da Gold diaria:
-
-```bash
-poetry run validate-gold-daily-weather-demand --dry-run
-poetry run validate-gold-daily-weather-demand
-```
-
-Esse check falha se encontrar:
-
-- quantidade de linhas diferente de 365 para 2025;
-- datas nulas, duplicadas ou fora do ano;
-- `qtd_corridas` nula ou negativa;
-- ausencia total de demanda;
-- dias sem clima associado;
-- colunas climaticas essenciais nulas.
-
-Teste local com amostra da TLC:
-
-```bash
-poetry run gold-daily-weather-demand \
-  --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
-  --output v2/data/delta/dev/gold/daily_weather_demand/2025_01
-```
-
-Responsabilidade desta etapa:
-
-- garantir 365 linhas para 2025;
-- consolidar a NOAA para uma linha de clima NYC por data;
-- deixar uma base simples para responder se clima afeta demanda por taxi.
+O Star Schema e a entrega dimensional principal para BI. A
+`daily_weather_demand` e a tabela diaria para EDA/ML. As duas saidas leem a
+Silver; a tabela diaria nao depende fisicamente do Star Schema.
 
 ## Star Schema
 
@@ -157,3 +110,62 @@ data e evitando duplicacao de corridas.
 Limite da V2.5: o clima e diario. Portanto, todas as corridas de uma mesma data
 recebem o mesmo `clima_id`. Mudancas de clima ao longo do dia ficam para uma V3,
 com clima e demanda em grao horario ou por faixa horaria.
+
+## Daily Weather Demand
+
+Esta tabela usa um calendario completo do ano como base e alinha:
+
+- demanda diaria da NYC TLC;
+- clima diario da NOAA;
+- flags para dias sem corrida ou sem clima.
+
+Entrada:
+
+```text
+v2/data/delta/silver/nyc_tlc/yellow/2025
+v2/data/delta/silver/noaa/ghcnd_nyc/2025
+```
+
+Saida:
+
+```text
+v2/data/delta/gold/daily_weather_demand/2025
+```
+
+Comando:
+
+```bash
+poetry run gold-daily-weather-demand --dry-run
+poetry run gold-daily-weather-demand
+```
+
+Validacao automatica depois da Gold diaria:
+
+```bash
+poetry run validate-gold-daily-weather-demand --dry-run
+poetry run validate-gold-daily-weather-demand
+```
+
+Esse check falha se encontrar:
+
+- quantidade de linhas diferente de 365 para 2025;
+- datas nulas, duplicadas ou fora do ano;
+- `qtd_corridas` nula ou negativa;
+- ausencia total de demanda;
+- dias sem clima associado;
+- colunas climaticas essenciais nulas.
+
+Teste local com amostra da TLC:
+
+```bash
+poetry run gold-daily-weather-demand \
+  --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
+  --output v2/data/delta/dev/gold/daily_weather_demand/2025_01 \
+  --skip-count
+```
+
+Responsabilidade desta etapa:
+
+- garantir 365 linhas para 2025;
+- consolidar a NOAA para uma linha de clima NYC por data;
+- deixar uma base simples para responder se clima afeta demanda por taxi.

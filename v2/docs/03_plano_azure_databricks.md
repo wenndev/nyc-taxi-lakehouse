@@ -90,8 +90,8 @@ Opcao recomendada para os downloaders Python no Databricks:
 /Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/taxi_zone_lookup
 /Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
-/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/gold/star_schema/2025
+/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/quarantine/nyc_tlc/yellow/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/nyc_tlc/yellow/2025
 /Volumes/<catalog>/<schema>/<volume>/delta/quarantine/nyc_tlc/taxi_zone_lookup
@@ -186,10 +186,10 @@ silver_noaa_weather.py
 validate_silver_nyc_tlc.py
 validate_silver_taxi_zone_lookup.py
 validate_silver_noaa_weather.py
-gold_daily_weather_demand.py
-validate_gold_daily_weather_demand.py
 gold_star_schema.py
 validate_gold_star_schema.py
+gold_daily_weather_demand.py
+validate_gold_daily_weather_demand.py
 ```
 
 Eles sao wrappers. A regra de negocio fica em:

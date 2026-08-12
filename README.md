@@ -23,29 +23,25 @@ A V1 gerou a Gold publicada no Kaggle:
 
 A V2 esta sendo desenvolvida em [v2/](v2/README.md).
 
-Para entender o projeto do zero, leia primeiro:
+## Como Ler A Documentacao
 
-[v2/docs/00_visao_geral.md](v2/docs/00_visao_geral.md)
+Se voce esta chegando agora no projeto, a ordem mais natural e:
 
-Mapa da documentacao da V2:
+1. Este `README.md` - contexto geral do repositorio.
+2. [v2/README.md](v2/README.md) - estrutura da V2 e comandos principais.
+3. [v2/docs/00_visao_geral.md](v2/docs/00_visao_geral.md) - historia da V1, problema da NOAA e desenho V2/V2.5.
+4. [v2/docs/02_dicionario_dados.md](v2/docs/02_dicionario_dados.md) - tabelas, campos e regras de negocio.
+5. READMEs das camadas em `v2/pipelines/` - ingestion, bronze, silver, quality, gold e dev.
+6. [v2/docs/01_runbook_execucao.md](v2/docs/01_runbook_execucao.md) - ordem para executar e validar.
+7. [v2/databricks/README.md](v2/databricks/README.md) - wrappers preparados para Databricks.
+8. [v2/docs/03_plano_azure_databricks.md](v2/docs/03_plano_azure_databricks.md) - plano de retorno para Azure.
+9. [v2/docs/04_orquestracao_adf_databricks.md](v2/docs/04_orquestracao_adf_databricks.md) - ADF orquestrando Databricks.
 
-[v2/docs/README.md](v2/docs/README.md)
+Arquivos de apoio:
 
-Historico tecnico da refatoracao:
-
-[v2/docs/06_historico_refatoracao.md](v2/docs/06_historico_refatoracao.md)
-
-Plano de retorno para Azure com ADF orquestrando Databricks:
-
-[v2/docs/04_orquestracao_adf_databricks.md](v2/docs/04_orquestracao_adf_databricks.md)
-
-Roteiro operacional para recriar a infraestrutura e executar a V2:
-
-[v2/docs/03_plano_azure_databricks.md](v2/docs/03_plano_azure_databricks.md)
-
-Dicionario de dados da V2:
-
-[v2/docs/02_dicionario_dados.md](v2/docs/02_dicionario_dados.md)
+- [v2/docs/README.md](v2/docs/README.md) - mapa da pasta de documentos.
+- [v2/docs/05_referencias_tecnicas.md](v2/docs/05_referencias_tecnicas.md) - notas praticas de Spark, Delta, Databricks e Azure.
+- [v2/docs/06_historico_refatoracao.md](v2/docs/06_historico_refatoracao.md) - diario tecnico da refatoracao.
 
 ## Fontes
 
@@ -160,7 +156,11 @@ nyc-taxi-lakehouse/
       ingestion/
       bronze/
       silver/
+      quality/
       gold/
+
+    databricks/
+      notebooks/
 
     notebooks/
     docs/
@@ -246,6 +246,15 @@ v2/notebooks/04_eda_weather_demand.ipynb
 A Silver completa da TLC pode ser pesada localmente. Para validar sem travar a maquina:
 
 ```bash
+poetry run run-v2-dev-sample
+```
+
+Esse comando roda o fluxo dev de ponta a ponta com amostra de janeiro. Ele
+reaproveita os scripts oficiais das camadas.
+
+O equivalente manual e:
+
+```bash
 poetry run bronze-nyc-tlc \
   --input v2/data/raw/nyc_tlc/yellow/2025/yellow_tripdata_2025-01.parquet \
   --output v2/data/delta/dev/bronze/nyc_tlc/yellow_sample/2025_01 \
@@ -257,14 +266,15 @@ poetry run silver-nyc-tlc \
   --output v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
   --skip-count
 
-poetry run gold-daily-weather-demand \
-  --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
-  --output v2/data/delta/dev/gold/daily_weather_demand/2025_01
-
 poetry run gold-star-schema \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
   --taxi-zone-lookup-input v2/data/delta/silver/nyc_tlc/taxi_zone_lookup \
   --output v2/data/delta/dev/gold/star_schema/2025_01 \
+  --skip-count
+
+poetry run gold-daily-weather-demand \
+  --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
+  --output v2/data/delta/dev/gold/daily_weather_demand/2025_01 \
   --skip-count
 ```
 
@@ -319,7 +329,7 @@ Gold Star Schema dev:
 dim_data = 365
 dim_clima = 365
 dim_localizacao = 265
-fact_trips = 97065
+fact_trips = 97060
 fact_trips.clima_id_nulo = 0
 fact_trips.data_id_nulo = 0
 fact_trips.localizacao_partida_id_nulo = 0

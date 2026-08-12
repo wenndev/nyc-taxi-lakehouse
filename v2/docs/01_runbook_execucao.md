@@ -364,6 +364,19 @@ daily_total_trips > 0
 
 Use este fluxo para testar sem travar a maquina.
 
+Comando automatico recomendado:
+
+```bash
+poetry run run-v2-dev-sample --dry-run
+poetry run run-v2-dev-sample
+```
+
+Esse comando roda a Bronze TLC sample, Silver TLC sample, validadores Silver,
+Gold Star Schema dev, validador da Gold dimensional, Gold Daily Weather Demand
+dev e validador da Gold diaria.
+
+O passo a passo manual equivalente fica abaixo.
+
 ### 7.1 Silver TLC Dev
 
 ```bash
@@ -443,7 +456,7 @@ fact_trips_null_clima_id = 0
 poetry run gold-daily-weather-demand \
   --tlc-input v2/data/delta/dev/silver/nyc_tlc/yellow_sample/2025_01 \
   --noaa-input v2/data/delta/silver/noaa/ghcnd_nyc/2025 \
-  --output v2/data/delta/dev/gold/data_mart/daily_weather_demand/2025_01 \
+  --output v2/data/delta/dev/gold/daily_weather_demand/2025_01 \
   --skip-count
 ```
 
@@ -451,7 +464,7 @@ Validar:
 
 ```bash
 poetry run validate-gold-daily-weather-demand \
-  --input v2/data/delta/dev/gold/data_mart/daily_weather_demand/2025_01
+  --input v2/data/delta/dev/gold/daily_weather_demand/2025_01
 ```
 
 Resultado esperado:
@@ -566,7 +579,7 @@ v2/data/delta/gold/daily_weather_demand/2025
 No dev atual:
 
 ```text
-v2/data/delta/dev/gold/data_mart/daily_weather_demand/2025_01
+v2/data/delta/dev/gold/daily_weather_demand/2025_01
 ```
 
 ## 10. Regras De Modelagem Da V2.5
@@ -659,10 +672,10 @@ silver_noaa_weather.py
 validate_silver_nyc_tlc.py
 validate_silver_taxi_zone_lookup.py
 validate_silver_noaa_weather.py
-gold_daily_weather_demand.py
-validate_gold_daily_weather_demand.py
 gold_star_schema.py
 validate_gold_star_schema.py
+gold_daily_weather_demand.py
+validate_gold_daily_weather_demand.py
 ```
 
 Esses wrappers permitem que o ADF pare o pipeline logo depois da Silver caso
