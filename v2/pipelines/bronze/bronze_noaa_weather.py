@@ -1,6 +1,21 @@
 # Resumo:
-# - Le as paginas JSON brutas da NOAA e salva como Delta Bronze.
-# - Mantem cada pagina com metadados de arquivo e data de processamento.
+# - Lê as páginas JSON brutas da NOAA e persiste os dados na camada Bronze
+#   no formato Delta.
+# - Mantém metadados do arquivo de origem e a data/hora de processamento.
+#
+# Conceitos Spark aplicados:
+# - DataFrame: os arquivos JSON brutos da NOAA são lidos em um DataFrame Spark.
+# - Transformações: withColumn adiciona os metadados de ingestão ao DataFrame.
+# - Lazy Evaluation: o Spark adia a execução das transformações até que uma
+#   ação exija o resultado.
+# - Action: write.save() dispara a execução do plano e persiste os dados
+#   da camada Bronze.
+# - count(): quando habilitado, dispara uma nova ação para contar os registros.
+# - Shuffle: não há shuffle evidente nesta etapa, pois não são utilizadas
+#   operações como groupBy, join, distinct ou repartition.
+# - Particionamento: não é definido manualmente neste script; o Spark determina
+#   as partições com base nos dados de entrada e nas configurações da execução.
+# - Delta Lake: o DataFrame da camada Bronze é persistido no formato Delta..
 
 from __future__ import annotations
 
@@ -15,24 +30,6 @@ from v2.config.spark import create_spark
 from v2.config.sources import NOAA_GHCND_NYC_STORAGE_ID
 
 
-def run_bronze_noaa_weather(
-    spark: SparkSession,
-    input_path: str,
-    output_path: str,
-    mode: str = "overwrite",
-) -> DataFrame:
-    df = (
-        spark.read.option("multiLine", "true")
-        .json(json_page_pattern(input_path))
-        .withColumn("arquivo_origem", input_file_name())
-        .withColumn("data_processamento_bronze", current_timestamp())
-    )
-
-    df.write.format("delta").mode(mode).option("overwriteSchema", "true").save(output_path)
-
-    return df
-
-
 def json_page_pattern(input_path: str) -> str:
     return f"{input_path.rstrip('/')}/page_*.json"
 
@@ -41,23 +38,105 @@ def is_local_path(path: str) -> bool:
     return "://" not in path
 
 
+def build_bronze_noaa_dataframe(
+    spark: SparkSession,
+    input_path: str,
+) -> DataFrame:
+    """
+    Cria o DataFrame Bronze da NOAA a partir das páginas JSON brutas.
+
+    Adiciona metadados de origem do arquivo e timestamp de processamento.
+    Não persiste os dados.
+    """
+    return (
+        spark.read.option("multiLine", "true")
+        .json(json_page_pattern(input_path))
+        .withColumn("arquivo_origem", input_file_name())
+        .withColumn("data_processamento_bronze", current_timestamp())
+    )
+
+
+def write_bronze_delta(
+    df_bronze: DataFrame,
+    output_path: str,
+    mode: str,
+) -> None:
+    """
+    Persiste o DataFrame Bronze no formato Delta.
+    """
+    writer = df_bronze.write.format("delta").mode(mode)
+
+    if mode == "overwrite":
+        writer = writer.option("overwriteSchema", "true")
+
+    writer.save(output_path)
+
+
+def run_bronze_noaa_weather(
+    spark: SparkSession,
+    input_path: str,
+    output_path: str,
+    mode: str = "overwrite",
+) -> DataFrame:
+    """
+    Executa a etapa Bronze da NOAA.
+
+    Lê os JSONs brutos, adiciona metadados e persiste o resultado em Delta.
+
+    Retorna:
+        DataFrame Bronze utilizado na escrita.
+    """
+    df_bronze = build_bronze_noaa_dataframe(
+        spark=spark,
+        input_path=input_path,
+    )
+
+    write_bronze_delta(
+        df_bronze=df_bronze,
+        output_path=output_path,
+        mode=mode,
+    )
+
+    return df_bronze
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(description="Create NOAA Weather Bronze Delta table")
+    parser = argparse.ArgumentParser(
+        description="Create NOAA Weather Bronze Delta table"
+    )
+
     parser.add_argument("--year", type=int, default=2025)
-    parser.add_argument("--datasetid", default=NOAA_GHCND_NYC_STORAGE_ID)
+    parser.add_argument(
+        "--datasetid",
+        default=NOAA_GHCND_NYC_STORAGE_ID,
+    )
     parser.add_argument("--input", default=None)
     parser.add_argument("--output", default=None)
-    parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])
+    parser.add_argument(
+        "--mode",
+        default="overwrite",
+        choices=["overwrite", "append"],
+    )
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-count", action="store_true")
+
     args = parser.parse_args()
 
-    input_path = args.input if args.input else str(noaa_raw_dir(args.year, args.datasetid))
-    output_path = args.output if args.output else str(noaa_bronze_dir(args.year, args.datasetid))
+    input_path = (
+        args.input
+        if args.input
+        else str(noaa_raw_dir(args.year, args.datasetid))
+    )
+
+    output_path = (
+        args.output
+        if args.output
+        else str(noaa_bronze_dir(args.year, args.datasetid))
+    )
 
     print(f"Input : {input_path}")
     print(f"Output: {output_path}")
-    print("Format: NOAA raw JSON -> delta")
+    print("Format: NOAA raw JSON -> Delta")
     print(f"Files : {json_page_pattern(input_path)}")
 
     if args.dry_run:
@@ -84,6 +163,7 @@ def main() -> int:
             print(f"Rows: {df_bronze.count()}")
 
         return 0
+
     finally:
         spark.stop()
 
