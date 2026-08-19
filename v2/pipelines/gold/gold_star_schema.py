@@ -21,6 +21,8 @@ from v2.config.spark import create_spark
 from v2.pipelines.gold.weather_consolidation import build_consolidated_daily_weather
 from v2.platform.delta import write_delta_table
 
+YEAR_MONTH_PARTITIONS = ("ano", "mes")
+
 
 @dataclass
 class GoldStarSchemaTables:
@@ -222,6 +224,9 @@ def build_fact_trips(
         .join(dim_chegada, on="id_local_chegada", how="left")
         .select(
             "data_id",
+            "ano",
+            "mes",
+            "dia_mes",
             "localizacao_partida_id",
             "localizacao_chegada_id",
             "clima_id",
@@ -262,13 +267,19 @@ def write_gold_tables(
     output_path: str,
     mode: str,
 ) -> None:
-    for table_name, df in [
-        ("dim_data", tables.dim_data),
-        ("dim_clima", tables.dim_clima),
-        ("dim_localizacao", tables.dim_localizacao),
-        ("fact_trips", tables.fact_trips),
-    ]:
-        write_delta_table(df, table_path(output_path, table_name), mode=mode)
+    table_write_configs = [
+        ("dim_data", tables.dim_data, None),
+        ("dim_clima", tables.dim_clima, None),
+        ("dim_localizacao", tables.dim_localizacao, None),
+        ("fact_trips", tables.fact_trips, YEAR_MONTH_PARTITIONS),
+    ]
+    for table_name, df, partition_by in table_write_configs:
+        write_delta_table(
+            df,
+            table_path(output_path, table_name),
+            mode=mode,
+            partition_by=partition_by,
+        )
 
 
 def table_path(output_path: str, table_name: str) -> str:

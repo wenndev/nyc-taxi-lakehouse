@@ -28,6 +28,8 @@ from v2.platform.delta import write_delta_table
 from v2.platform.logging import configure_logging, get_logger, log_event
 from v2.platform.run_context import RunContext
 
+YEAR_MONTH_PARTITIONS = ("ano", "mes")
+
 
 def run_silver_noaa_weather(
     spark: SparkSession,
@@ -72,7 +74,7 @@ def run_silver_noaa_weather(
     df = build_daily_weather(df)
     df = add_derived_columns(df)
 
-    write_delta_table(df, output_path, mode=mode)
+    write_delta_table(df, output_path, mode=mode, partition_by=YEAR_MONTH_PARTITIONS)
 
     return df
 

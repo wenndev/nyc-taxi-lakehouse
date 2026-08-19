@@ -230,17 +230,30 @@ mode=append    -> adiciona novos arquivos Delta naquele caminho
 Para execucao local/dev, `overwrite` continua sendo o modo recomendado porque
 evita duplicidade ao rodar o mesmo comando mais de uma vez.
 
-Para a futura execucao no Databricks, o mesmo helper permite evoluir para
-reprocessamento por recorte:
+A V2 ja escreve as tabelas temporais com particionamento por ano e mes:
+
+```text
+Silver NYC TLC              -> partitionBy=["ano", "mes"]
+Silver NOAA                 -> partitionBy=["ano", "mes"]
+Gold Star Schema/fact_trips -> partitionBy=["ano", "mes"]
+Gold daily_weather_demand   -> partitionBy=["ano", "mes"]
+```
+
+Bronze e dimensoes pequenas ficam sem particionamento por enquanto. A Bronze
+preserva melhor o dado de entrada e as dimensoes pequenas nao ganham muito com
+pastas particionadas.
+
+Para a futura execucao incremental no Databricks, o mesmo helper permite evoluir
+para reprocessamento por recorte:
 
 ```text
 replaceWhere="ano = 2025 AND mes = 1"
 partitionBy=["ano", "mes"]
 ```
 
-Essa evolucao sera aplicada quando a estrategia incremental/backfill for
-fechada. Por enquanto, a V2 ganhou o ponto central de controle sem mudar a
-regra de negocio das tabelas.
+O particionamento ja esta ativo. O `replaceWhere` ainda fica preparado para a
+estrategia incremental/backfill, quando a execucao por mes ou por dia for
+fechada no Databricks/ADF.
 
 ## Ingestion
 
@@ -399,6 +412,9 @@ gold/daily_weather_demand/2025
 O Star Schema e a entrega dimensional principal para BI. A
 `daily_weather_demand` e uma tabela diaria para EDA/ML. As duas saidas leem dados
 da Silver; a tabela diaria nao depende fisicamente do Star Schema.
+
+Na escrita Delta, `fact_trips` e `daily_weather_demand` ficam particionadas por
+`ano` e `mes`. As dimensoes ficam sem particionamento porque sao pequenas.
 
 Criar Gold dimensional:
 

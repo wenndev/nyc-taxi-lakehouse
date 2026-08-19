@@ -78,6 +78,9 @@ class GoldStarSchemaValidationTest(unittest.TestCase):
             [
                 (
                     20250101,
+                    2025,
+                    1,
+                    1,
                     20250101,
                     1,
                     2,
@@ -85,6 +88,9 @@ class GoldStarSchemaValidationTest(unittest.TestCase):
                 ),
                 (
                     20250102,
+                    2025,
+                    1,
+                    2,
                     20250102,
                     2,
                     1,
@@ -94,6 +100,9 @@ class GoldStarSchemaValidationTest(unittest.TestCase):
             schema=T.StructType(
                 [
                     T.StructField("data_id", T.IntegerType(), nullable=False),
+                    T.StructField("ano", T.IntegerType(), nullable=False),
+                    T.StructField("mes", T.IntegerType(), nullable=False),
+                    T.StructField("dia_mes", T.IntegerType(), nullable=False),
                     T.StructField("clima_id", T.IntegerType(), nullable=False),
                     T.StructField(
                         "localizacao_partida_id",

@@ -128,6 +128,18 @@ Prioridade recomendada:
 Para o projeto:
 
 ```text
+Silver NYC TLC:
+  particionamento ativo: ano, mes
+
+Silver NOAA:
+  particionamento ativo: ano, mes
+
+Gold star fact_trips:
+  particionamento ativo: ano, mes
+
+Gold diaria:
+  particionamento ativo: ano, mes
+
 Gold diaria:
   filtros comuns: data, mes, chuva, temperatura
 

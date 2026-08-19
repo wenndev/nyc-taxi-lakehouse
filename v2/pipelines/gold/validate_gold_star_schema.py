@@ -303,6 +303,9 @@ def validate_required_columns(
         ),
         "fact_trips": (
             "data_id",
+            "ano",
+            "mes",
+            "dia_mes",
             "clima_id",
             "localizacao_partida_id",
             "localizacao_chegada_id",

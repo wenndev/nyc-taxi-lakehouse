@@ -83,6 +83,7 @@ DEDUPLICATION_COLUMNS = [
     "id_local_chegada",
     "valor_total",
 ]
+YEAR_MONTH_PARTITIONS = ("ano", "mes")
 
 
 def run_silver_nyc_tlc(
@@ -139,7 +140,7 @@ def run_silver_nyc_tlc(
     df = add_semantic_columns(df)
     df = drop_business_duplicates(df)
 
-    write_delta_table(df, output_path, mode=mode)
+    write_delta_table(df, output_path, mode=mode, partition_by=YEAR_MONTH_PARTITIONS)
 
     return df
 

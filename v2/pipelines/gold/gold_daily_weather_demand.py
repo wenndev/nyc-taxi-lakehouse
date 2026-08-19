@@ -19,6 +19,8 @@ from v2.config.spark import create_spark
 from v2.pipelines.gold.weather_consolidation import build_consolidated_daily_weather
 from v2.platform.delta import write_delta_table
 
+YEAR_MONTH_PARTITIONS = ("ano", "mes")
+
 
 def run_gold_daily_weather_demand(
     spark: SparkSession,
@@ -49,7 +51,7 @@ def run_gold_daily_weather_demand(
         .orderBy("data")
     )
 
-    write_delta_table(df, output_path, mode=mode)
+    write_delta_table(df, output_path, mode=mode, partition_by=YEAR_MONTH_PARTITIONS)
 
     return df
 

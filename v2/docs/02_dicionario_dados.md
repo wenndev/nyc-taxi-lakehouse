@@ -360,6 +360,9 @@ Grao:
 | Coluna | Tipo logico | Descricao |
 |---|---:|---|
 | `data_id` | integer | FK para `dim_data`. |
+| `ano` | integer | Ano da corrida. Tambem usado como coluna de particionamento Delta. |
+| `mes` | integer | Mes da corrida. Tambem usado como coluna de particionamento Delta. |
+| `dia_mes` | integer | Dia do mes da corrida. |
 | `localizacao_partida_id` | integer | FK para `dim_localizacao` no papel de partida. |
 | `localizacao_chegada_id` | integer | FK para `dim_localizacao` no papel de chegada. |
 | `clima_id` | integer | FK para `dim_clima`, usando a data da corrida. |
