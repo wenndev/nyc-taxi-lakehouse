@@ -13,6 +13,7 @@ from pyspark.sql.types import IntegerType
 
 from v2.config.paths import nyc_tlc_bronze_dir, nyc_tlc_raw_dir
 from v2.config.spark import create_spark
+from v2.platform.delta import write_delta_table
 
 
 def run_bronze_nyc_tlc(
@@ -33,7 +34,7 @@ def run_bronze_nyc_tlc(
         .withColumn("payment_type", col("payment_type").cast(IntegerType()))
     )
 
-    df.write.format("delta").mode(mode).save(output_path)
+    write_delta_table(df, output_path, mode=mode)
 
     return df
 

@@ -23,6 +23,7 @@ from v2.pipelines.quality.exceptions import DataQualityCriticalError
 from v2.pipelines.quality.models import QualityStatus
 from v2.pipelines.quality.storage import write_quality_outputs
 from v2.pipelines.quality.validators import validate_taxi_zone_lookup_data
+from v2.platform.delta import write_delta_table
 from v2.platform.logging import configure_logging, get_logger, log_event
 from v2.platform.run_context import RunContext
 
@@ -74,9 +75,7 @@ def run_silver_taxi_zone_lookup(
     else:
         df = filter_required_columns(df).dropDuplicates(["location_id"])
 
-    df.write.format("delta").mode(mode).option("overwriteSchema", "true").save(
-        output_path
-    )
+    write_delta_table(df, output_path, mode=mode)
 
     return df
 

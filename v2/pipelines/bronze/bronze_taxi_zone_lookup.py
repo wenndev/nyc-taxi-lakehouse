@@ -12,6 +12,7 @@ from pyspark.sql import DataFrame, SparkSession
 from v2.config.paths import taxi_zone_lookup_bronze_dir, taxi_zone_lookup_raw_dir
 from v2.config.sources import TAXI_ZONE_LOOKUP_FILENAME
 from v2.config.spark import create_spark
+from v2.platform.delta import write_delta_table
 
 
 def run_bronze_taxi_zone_lookup(
@@ -22,9 +23,7 @@ def run_bronze_taxi_zone_lookup(
 ) -> DataFrame:
     df = spark.read.option("header", "true").option("inferSchema", "true").csv(input_path)
 
-    df.write.format("delta").mode(mode).option("overwriteSchema", "true").save(
-        output_path
-    )
+    write_delta_table(df, output_path, mode=mode)
 
     return df
 

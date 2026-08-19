@@ -28,6 +28,7 @@ from pyspark.sql.functions import current_timestamp, input_file_name
 from v2.config.paths import noaa_bronze_dir, noaa_raw_dir
 from v2.config.spark import create_spark
 from v2.config.sources import NOAA_GHCND_NYC_STORAGE_ID
+from v2.platform.delta import write_delta_table
 
 
 def json_page_pattern(input_path: str) -> str:
@@ -64,12 +65,7 @@ def write_bronze_delta(
     """
     Persiste o DataFrame Bronze no formato Delta.
     """
-    writer = df_bronze.write.format("delta").mode(mode)
-
-    if mode == "overwrite":
-        writer = writer.option("overwriteSchema", "true")
-
-    writer.save(output_path)
+    write_delta_table(df_bronze, output_path, mode=mode)
 
 
 def run_bronze_noaa_weather(

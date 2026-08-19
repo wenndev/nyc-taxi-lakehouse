@@ -8,6 +8,7 @@ from pyspark.sql import SparkSession
 from pyspark.sql import types as T
 
 from v2.pipelines.quality.models import DataQualityResult, QualityMetrics
+from v2.platform.delta import write_delta_table
 
 
 def write_quality_outputs(
@@ -17,17 +18,13 @@ def write_quality_outputs(
     quarantine_mode: str = "overwrite",
     metrics_mode: str = "append",
 ) -> None:
-    result.invalid_records.write.format("delta").mode(quarantine_mode).option(
-        "overwriteSchema", "true"
-    ).save(quarantine_path)
+    write_delta_table(result.invalid_records, quarantine_path, mode=quarantine_mode)
 
     metrics_df = metrics_to_dataframe(
         spark=result.valid_records.sparkSession,
         metrics=result.metrics,
     )
-    metrics_df.write.format("delta").mode(metrics_mode).option(
-        "mergeSchema", "true"
-    ).save(metrics_path)
+    write_delta_table(metrics_df, metrics_path, mode=metrics_mode, merge_schema=True)
 
 
 def metrics_to_dataframe(spark: SparkSession, metrics: QualityMetrics):

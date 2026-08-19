@@ -205,6 +205,43 @@ export PIPELINE_RUN_ID=manual-test-001
 export ADF_PIPELINE_RUN_ID=<run_id_do_adf>
 ```
 
+## Escrita Delta E Idempotencia
+
+As escritas Delta da V2 passam por `v2/platform/delta.py`.
+
+Isso cria um ponto unico para controlar:
+
+```text
+overwrite
+append
+overwriteSchema
+mergeSchema
+partitionBy
+replaceWhere
+```
+
+Hoje o comportamento padrao continua simples:
+
+```text
+mode=overwrite -> reprocessa a saida inteira daquele caminho
+mode=append    -> adiciona novos arquivos Delta naquele caminho
+```
+
+Para execucao local/dev, `overwrite` continua sendo o modo recomendado porque
+evita duplicidade ao rodar o mesmo comando mais de uma vez.
+
+Para a futura execucao no Databricks, o mesmo helper permite evoluir para
+reprocessamento por recorte:
+
+```text
+replaceWhere="ano = 2025 AND mes = 1"
+partitionBy=["ano", "mes"]
+```
+
+Essa evolucao sera aplicada quando a estrategia incremental/backfill for
+fechada. Por enquanto, a V2 ganhou o ponto central de controle sem mudar a
+regra de negocio das tabelas.
+
 ## Ingestion
 
 Baixar ou conferir os arquivos Parquet da NYC TLC 2025.

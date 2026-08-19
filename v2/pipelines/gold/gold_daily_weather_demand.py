@@ -17,6 +17,7 @@ from v2.config.paths import (
 )
 from v2.config.spark import create_spark
 from v2.pipelines.gold.weather_consolidation import build_consolidated_daily_weather
+from v2.platform.delta import write_delta_table
 
 
 def run_gold_daily_weather_demand(
@@ -48,7 +49,7 @@ def run_gold_daily_weather_demand(
         .orderBy("data")
     )
 
-    df.write.format("delta").mode(mode).option("overwriteSchema", "true").save(output_path)
+    write_delta_table(df, output_path, mode=mode)
 
     return df
 
