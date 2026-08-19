@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 from pyspark.sql import DataFrame, SparkSession
@@ -23,6 +24,8 @@ from v2.pipelines.quality.exceptions import DataQualityCriticalError
 from v2.pipelines.quality.models import QualityStatus
 from v2.pipelines.quality.storage import write_quality_outputs
 from v2.pipelines.quality.validators import validate_noaa_data
+from v2.platform.logging import configure_logging, get_logger, log_event
+from v2.platform.run_context import RunContext
 
 
 def run_silver_noaa_weather(
@@ -190,6 +193,7 @@ def print_quality_summary(metrics: dict[str, object]) -> None:
 
 
 def main() -> int:
+    configure_logging()
     parser = argparse.ArgumentParser(description="Create NOAA Weather Silver Delta table")
     parser.add_argument("--year", type=int, default=2025)
     parser.add_argument("--datasetid", default=NOAA_GHCND_NYC_STORAGE_ID)
@@ -216,11 +220,18 @@ def main() -> int:
         if args.metrics_output
         else str(noaa_quality_metrics_dir(args.year, args.datasetid))
     )
+    context = RunContext.create(
+        pipeline_name="silver-noaa-weather",
+        year=args.year,
+        pipeline_run_id=args.pipeline_run_id,
+    )
+    logger = get_logger(__name__)
 
     print(f"Input : {input_path}")
     print(f"Output: {output_path}")
     print(f"Quarantine: {quarantine_path}")
     print(f"Metrics   : {metrics_path}")
+    print(f"Pipeline run id: {context.pipeline_run_id}")
     print("Format: delta -> delta")
     print(
         "Steps : explode NOAA results, filter required columns, pivot daily weather, "
@@ -239,6 +250,15 @@ def main() -> int:
     spark = create_spark("SilverNOAAWeather")
 
     try:
+        log_event(
+            logger,
+            "pipeline_start",
+            context=context,
+            input_path=input_path,
+            output_path=output_path,
+            quality_enabled=not args.skip_quality,
+            mode=args.mode,
+        )
         df_silver = run_silver_noaa_weather(
             spark=spark,
             input_path=input_path,
@@ -246,7 +266,7 @@ def main() -> int:
             mode=args.mode,
             quarantine_path=quarantine_path,
             metrics_path=metrics_path,
-            pipeline_run_id=args.pipeline_run_id,
+            pipeline_run_id=context.pipeline_run_id,
             enable_quality=not args.skip_quality,
         )
 
@@ -256,7 +276,18 @@ def main() -> int:
         if not args.skip_count:
             print(f"Rows: {df_silver.count()}")
 
+        log_event(logger, "pipeline_success", context=context, output_path=output_path)
         return 0
+    except Exception as exc:
+        log_event(
+            logger,
+            "pipeline_failure",
+            context=context,
+            level=logging.ERROR,
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+        )
+        raise
     finally:
         spark.stop()
 

@@ -166,6 +166,45 @@ poetry run run-v2-dev-sample
 Esse comando valida uma amostra da TLC e reaproveita Silver NOAA e Taxi Zone
 Lookup ja publicadas localmente.
 
+## Configuracao Por Ambiente
+
+A V2 agora possui uma base simples de configuracao em `v2/config/settings.py`.
+Por padrao, tudo continua rodando localmente em:
+
+```text
+v2/data/raw
+v2/data/delta
+```
+
+Variaveis uteis para testes locais ou preparacao cloud:
+
+```bash
+export NYC_TAXI_ENV=local
+export NYC_TAXI_STORAGE_MODE=local
+export NYC_TAXI_RAW_ROOT=v2/data/raw
+export NYC_TAXI_DELTA_ROOT=v2/data/delta
+export NYC_TAXI_SPARK_MASTER='local[1]'
+export NYC_TAXI_SPARK_SHUFFLE_PARTITIONS=16
+export NYC_TAXI_LOG_LEVEL=INFO
+```
+
+No Databricks, os wrappers continuam recebendo caminhos por parametro. A ideia
+e usar o mesmo codigo PySpark e trocar apenas configuracao/caminhos:
+
+```bash
+export NYC_TAXI_ENV=databricks
+export NYC_TAXI_STORAGE_MODE=databricks_volume
+export NYC_TAXI_SPARK_MASTER=
+```
+
+As execucoes tambem passam a usar `pipeline_run_id`. Localmente ele e gerado
+automaticamente; no Azure/ADF pode vir de parametro ou variavel de ambiente:
+
+```bash
+export PIPELINE_RUN_ID=manual-test-001
+export ADF_PIPELINE_RUN_ID=<run_id_do_adf>
+```
+
 ## Ingestion
 
 Baixar ou conferir os arquivos Parquet da NYC TLC 2025.

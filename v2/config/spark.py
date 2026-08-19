@@ -6,20 +6,35 @@ from __future__ import annotations
 
 from pyspark.sql import SparkSession
 
+from v2.config.settings import SparkSettings, load_settings
 
-def create_spark(app_name: str) -> SparkSession:
+
+def create_spark(
+    app_name: str,
+    spark_settings: SparkSettings | None = None,
+) -> SparkSession:
+    settings = spark_settings or load_settings().spark
+    builder = SparkSession.builder.appName(app_name)
+
+    if settings.master:
+        builder = builder.master(settings.master)
+
     builder = (
-        SparkSession.builder.appName(app_name)
-        .master("local[1]")
-        .config("spark.driver.memory", "1g")
-        .config("spark.driver.maxResultSize", "512m")
-        .config("spark.sql.shuffle.partitions", "16")
-        .config("spark.sql.files.maxPartitionBytes", "32m")
-        .config("spark.databricks.delta.snapshotPartitions", "4")
+        builder.config("spark.driver.memory", settings.driver_memory)
+        .config("spark.driver.maxResultSize", settings.driver_max_result_size)
+        .config("spark.sql.shuffle.partitions", settings.shuffle_partitions)
+        .config("spark.sql.files.maxPartitionBytes", settings.max_partition_bytes)
+        .config(
+            "spark.databricks.delta.snapshotPartitions",
+            settings.delta_snapshot_partitions,
+        )
         .config("spark.sql.adaptive.enabled", "true")
         .config("spark.sql.adaptive.coalescePartitions.enabled", "true")
-        .config("spark.sql.session.timeZone", "UTC")
-        .config("spark.sql.debug.maxToStringFields", "200")
+        .config("spark.sql.session.timeZone", settings.session_timezone)
+        .config(
+            "spark.sql.debug.maxToStringFields",
+            settings.debug_max_to_string_fields,
+        )
     )
 
     try:

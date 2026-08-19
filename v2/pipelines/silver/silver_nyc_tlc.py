@@ -5,6 +5,7 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from pathlib import Path
 
 from pyspark.sql import DataFrame, SparkSession
@@ -34,6 +35,8 @@ from v2.pipelines.quality.exceptions import DataQualityCriticalError
 from v2.pipelines.quality.models import QualityStatus
 from v2.pipelines.quality.storage import write_quality_outputs
 from v2.pipelines.quality.validators import validate_tlc_data
+from v2.platform.logging import configure_logging, get_logger, log_event
+from v2.platform.run_context import RunContext
 
 COLUMN_RENAMES = {
     "VendorID": "id_vendedor",
@@ -385,6 +388,7 @@ def drop_business_duplicates(df: DataFrame) -> DataFrame:
 
 
 def main() -> int:
+    configure_logging()
     parser = argparse.ArgumentParser(description="Create NYC TLC Silver Delta table")
     parser.add_argument("--year", type=int, default=2025)
     parser.add_argument("--input", default=None)
@@ -413,11 +417,20 @@ def main() -> int:
         if args.metrics_output
         else str(nyc_tlc_quality_metrics_dir(args.year))
     )
+    context = RunContext.create(
+        pipeline_name="silver-nyc-tlc",
+        year=args.year,
+        start_date=args.start_date,
+        end_date=args.end_date,
+        pipeline_run_id=args.pipeline_run_id,
+    )
+    logger = get_logger(__name__)
 
     print(f"Input : {input_path}")
     print(f"Output: {output_path}")
     print(f"Quarantine: {quarantine_path}")
     print(f"Metrics   : {metrics_path}")
+    print(f"Pipeline run id: {context.pipeline_run_id}")
     print("Format: delta -> delta")
     print(
         "Steps : rename columns, validate quality, fill nulls, "
@@ -442,6 +455,15 @@ def main() -> int:
     spark = create_spark("SilverNYCTLC")
 
     try:
+        log_event(
+            logger,
+            "pipeline_start",
+            context=context,
+            input_path=input_path,
+            output_path=output_path,
+            quality_enabled=not args.skip_quality,
+            mode=args.mode,
+        )
         df_silver = run_silver_nyc_tlc(
             spark=spark,
             input_path=input_path,
@@ -452,7 +474,7 @@ def main() -> int:
             limit_rows=args.limit,
             quarantine_path=quarantine_path,
             metrics_path=metrics_path,
-            pipeline_run_id=args.pipeline_run_id,
+            pipeline_run_id=context.pipeline_run_id,
             enable_quality=not args.skip_quality,
             quality_config=TLCQualityConfig.for_year(args.year),
         )
@@ -463,7 +485,18 @@ def main() -> int:
         if not args.skip_count:
             print(f"Rows: {df_silver.count()}")
 
+        log_event(logger, "pipeline_success", context=context, output_path=output_path)
         return 0
+    except Exception as exc:
+        log_event(
+            logger,
+            "pipeline_failure",
+            context=context,
+            level=logging.ERROR,
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+        )
+        raise
     finally:
         spark.stop()
 

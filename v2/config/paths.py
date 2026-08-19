@@ -6,11 +6,13 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from v2.config.settings import load_settings
 from v2.config.sources import NOAA_GHCND_NYC_STORAGE_ID
 
-V2_ROOT = Path(__file__).resolve().parents[1]
-RAW_ROOT = V2_ROOT / "data" / "raw"
-DELTA_ROOT = V2_ROOT / "data" / "delta"
+SETTINGS = load_settings()
+V2_ROOT = SETTINGS.v2_root
+RAW_ROOT = SETTINGS.raw_root
+DELTA_ROOT = SETTINGS.delta_root
 GOLD_ROOT = DELTA_ROOT / "gold"
 QUARANTINE_ROOT = DELTA_ROOT / "quarantine"
 MONITORING_ROOT = DELTA_ROOT / "monitoring"

@@ -5,8 +5,9 @@
 from __future__ import annotations
 
 import argparse
+import logging
 from dataclasses import dataclass
-from datetime import UTC, date, datetime
+from datetime import date
 from pathlib import Path
 
 from v2.config.paths import (
@@ -48,6 +49,8 @@ from v2.pipelines.silver.validate_silver_taxi_zone_lookup import (
     SilverTaxiZoneLookupValidationConfig,
     run_silver_taxi_zone_lookup_validation,
 )
+from v2.platform.logging import configure_logging, get_logger, log_event
+from v2.platform.run_context import RunContext
 
 
 @dataclass(frozen=True)
@@ -71,8 +74,26 @@ def run_dev_sample(
     sample_rows: int = 100000,
     expected_tlc_days: int = 2,
     mode: str = "overwrite",
+    run_context: RunContext | None = None,
 ) -> None:
     validate_required_inputs(paths)
+
+    context = run_context or RunContext.create(
+        pipeline_name="run-v2-dev-sample",
+        year=year,
+        start_date=start_date,
+        end_date=end_date,
+        batch_id=f"{year}_{start_date}_{end_date}",
+    )
+    logger = get_logger(__name__)
+    log_event(
+        logger,
+        "pipeline_start",
+        context=context,
+        sample_rows=sample_rows,
+        expected_tlc_days=expected_tlc_days,
+        mode=mode,
+    )
 
     spark = create_spark("RunV2DevSample")
 
@@ -96,7 +117,7 @@ def run_dev_sample(
             end_date=end_date,
             quarantine_path=paths.quarantine_tlc_output,
             metrics_path=paths.metrics_tlc_output,
-            pipeline_run_id=build_pipeline_run_id(),
+            pipeline_run_id=context.pipeline_run_id,
             enable_quality=True,
         )
 
@@ -195,6 +216,17 @@ def run_dev_sample(
 
         print_stage("8/8 Dev sample end-to-end PASS")
         print("Fluxo dev validado de ponta a ponta.")
+        log_event(logger, "pipeline_success", context=context)
+    except Exception as exc:
+        log_event(
+            logger,
+            "pipeline_failure",
+            context=context,
+            level=logging.ERROR,
+            error_type=type(exc).__name__,
+            error_message=str(exc),
+        )
+        raise
     finally:
         spark.stop()
 
@@ -211,10 +243,6 @@ def validate_required_inputs(paths: DevSamplePaths) -> None:
     ):
         if not delta_table_exists(path):
             raise FileNotFoundError(f"{label} Delta table not found: {path}")
-
-
-def build_pipeline_run_id() -> str:
-    return f"dev-sample-{datetime.now(UTC).strftime('%Y%m%d%H%M%S')}"
 
 
 def fail_if_not_passed(passed: bool, label: str) -> None:
@@ -278,6 +306,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--noaa-input", default=None)
     parser.add_argument("--gold-star-schema-output", default=None)
     parser.add_argument("--gold-daily-output", default=None)
+    parser.add_argument("--pipeline-run-id", default=None)
     parser.add_argument("--mode", choices=["overwrite", "append"], default="overwrite")
     parser.add_argument("--dry-run", action="store_true")
     return parser.parse_args()
@@ -301,13 +330,18 @@ def apply_overrides(paths: DevSamplePaths, args: argparse.Namespace) -> DevSampl
     )
 
 
-def print_plan(paths: DevSamplePaths, args: argparse.Namespace) -> None:
+def print_plan(
+    paths: DevSamplePaths,
+    args: argparse.Namespace,
+    context: RunContext,
+) -> None:
     start_date, end_date = resolve_date_range(args)
     print("Run V2 dev sample")
     print(f"Year             : {args.year}")
     print(f"Month            : {args.month:02d}")
     print(f"Start date       : {start_date}")
     print(f"End date         : {end_date}")
+    print(f"Pipeline run id  : {context.pipeline_run_id}")
     print(f"Sample rows      : {args.sample_rows}")
     print(f"Expected TLC days: {args.expected_tlc_days}")
     print(f"Mode             : {args.mode}")
@@ -335,10 +369,19 @@ def resolve_date_range(args: argparse.Namespace) -> tuple[str, str]:
 
 
 def main() -> int:
+    configure_logging()
     args = parse_args()
     paths = apply_overrides(default_paths(args.year, args.month), args)
     start_date, end_date = resolve_date_range(args)
-    print_plan(paths, args)
+    context = RunContext.create(
+        pipeline_name="run-v2-dev-sample",
+        year=args.year,
+        start_date=start_date,
+        end_date=end_date,
+        batch_id=f"{args.year}_{start_date}_{end_date}",
+        pipeline_run_id=args.pipeline_run_id,
+    )
+    print_plan(paths, args, context)
 
     if args.dry_run:
         return 0
@@ -352,6 +395,7 @@ def main() -> int:
             sample_rows=args.sample_rows,
             expected_tlc_days=args.expected_tlc_days,
             mode=args.mode,
+            run_context=context,
         )
     except Exception as exc:
         print(f"Dev sample failed: {exc}")
