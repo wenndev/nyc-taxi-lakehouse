@@ -140,6 +140,10 @@ Gold star fact_trips:
 Gold diaria:
   particionamento ativo: ano, mes
 
+Reprocessamento mensal:
+  replace_month=1
+  replaceWhere gerado: ano = 2025 AND mes = 1
+
 Gold diaria:
   filtros comuns: data, mes, chuva, temperatura
 

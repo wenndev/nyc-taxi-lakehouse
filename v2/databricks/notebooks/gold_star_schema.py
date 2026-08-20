@@ -58,6 +58,10 @@ spark = get_spark()
 # COMMAND ----------
 
 from v2.pipelines.gold.gold_star_schema import run_gold_star_schema  # noqa: E402
+from v2.platform.partitions import (  # noqa: E402
+    resolve_year_month_partition,
+    validate_replace_partition_write_mode,
+)
 
 # COMMAND ----------
 
@@ -67,6 +71,8 @@ dbutils.widgets.text("noaa_input", "")
 dbutils.widgets.text("taxi_zone_lookup_input", "")
 dbutils.widgets.text("output", "")
 dbutils.widgets.text("mode", "overwrite")
+dbutils.widgets.text("replace_year", "")
+dbutils.widgets.text("replace_month", "")
 dbutils.widgets.text("skip_count", "true")
 dbutils.widgets.text("dry_run", "false")
 
@@ -92,6 +98,14 @@ noaa_input_path = optional_widget("noaa_input")
 taxi_zone_lookup_input_path = optional_widget("taxi_zone_lookup_input")
 output_path = optional_widget("output")
 mode = widget("mode")
+replace_year = int(widget("replace_year")) if optional_widget("replace_year") else None
+replace_month = int(widget("replace_month")) if optional_widget("replace_month") else None
+replace_partition = resolve_year_month_partition(
+    base_year=year,
+    replace_year=replace_year,
+    replace_month=replace_month,
+)
+validate_replace_partition_write_mode(mode, replace_partition)
 skip_count = bool_widget("skip_count")
 dry_run = bool_widget("dry_run")
 
@@ -114,6 +128,8 @@ print(f"Output    : {output_path}")
 print(f"Year      : {year}")
 print("Format    : silver delta -> gold star schema delta")
 print("Tables    : dim_data, dim_clima, dim_localizacao, fact_trips")
+if replace_partition:
+    print(f"Fact replaceWhere: {replace_partition.replace_where}")
 
 if dry_run:
     dbutils.notebook.exit(
@@ -125,6 +141,9 @@ if dry_run:
                 "taxi_zone_lookup_input": taxi_zone_lookup_input_path,
                 "output": output_path,
                 "year": year,
+                "fact_replace_where": (
+                    replace_partition.replace_where if replace_partition else None
+                ),
             }
         )
     )
@@ -137,6 +156,7 @@ tables = run_gold_star_schema(
     output_path=output_path,
     year=year,
     mode=mode,
+    replace_partition=replace_partition,
 )
 
 print("Gold Star Schema saved.")
@@ -163,6 +183,9 @@ dbutils.notebook.exit(
             "taxi_zone_lookup_input": taxi_zone_lookup_input_path,
             "output": output_path,
             "year": year,
+            "fact_replace_where": (
+                replace_partition.replace_where if replace_partition else None
+            ),
             "rows": rows,
         }
     )

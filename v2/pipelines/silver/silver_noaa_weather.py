@@ -26,9 +26,15 @@ from v2.pipelines.quality.storage import write_quality_outputs
 from v2.pipelines.quality.validators import validate_noaa_data
 from v2.platform.delta import write_delta_table
 from v2.platform.logging import configure_logging, get_logger, log_event
+from v2.platform.partitions import (
+    YEAR_MONTH_PARTITIONS,
+    YearMonthPartition,
+    filter_month_date_range,
+    filter_year_month_partition,
+    resolve_year_month_partition,
+    validate_replace_partition_write_mode,
+)
 from v2.platform.run_context import RunContext
-
-YEAR_MONTH_PARTITIONS = ("ano", "mes")
 
 
 def run_silver_noaa_weather(
@@ -41,9 +47,12 @@ def run_silver_noaa_weather(
     pipeline_run_id: str | None = None,
     enable_quality: bool = True,
     quality_config: NOAAQualityConfig | None = None,
+    replace_partition: YearMonthPartition | None = None,
 ) -> DataFrame:
+    validate_replace_partition_write_mode(mode, replace_partition)
     df = spark.read.format("delta").load(input_path)
     df = normalize_results(df)
+    df = filter_month_date_range(df, "data_clima", replace_partition)
 
     if enable_quality:
         quality_result = validate_noaa_data(
@@ -73,8 +82,15 @@ def run_silver_noaa_weather(
 
     df = build_daily_weather(df)
     df = add_derived_columns(df)
+    df = filter_year_month_partition(df, replace_partition)
 
-    write_delta_table(df, output_path, mode=mode, partition_by=YEAR_MONTH_PARTITIONS)
+    write_delta_table(
+        df,
+        output_path,
+        mode=mode,
+        partition_by=YEAR_MONTH_PARTITIONS,
+        replace_where=replace_partition.replace_where if replace_partition else None,
+    )
 
     return df
 
@@ -207,9 +223,17 @@ def main() -> int:
     parser.add_argument("--pipeline-run-id", default=None)
     parser.add_argument("--skip-quality", action="store_true")
     parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])
+    parser.add_argument("--replace-year", type=int, default=None)
+    parser.add_argument("--replace-month", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-count", action="store_true")
     args = parser.parse_args()
+    replace_partition = resolve_year_month_partition(
+        base_year=args.year,
+        replace_year=args.replace_year,
+        replace_month=args.replace_month,
+    )
+    validate_replace_partition_write_mode(args.mode, replace_partition)
 
     input_path = args.input if args.input else str(noaa_bronze_dir(args.year, args.datasetid))
     output_path = args.output if args.output else str(noaa_silver_dir(args.year, args.datasetid))
@@ -226,6 +250,8 @@ def main() -> int:
     context = RunContext.create(
         pipeline_name="silver-noaa-weather",
         year=args.year,
+        start_date=replace_partition.date_range()[0] if replace_partition else None,
+        end_date=replace_partition.date_range()[1] if replace_partition else None,
         pipeline_run_id=args.pipeline_run_id,
     )
     logger = get_logger(__name__)
@@ -236,6 +262,8 @@ def main() -> int:
     print(f"Metrics   : {metrics_path}")
     print(f"Pipeline run id: {context.pipeline_run_id}")
     print("Format: delta -> delta")
+    if replace_partition:
+        print(f"ReplaceWhere: {replace_partition.replace_where}")
     print(
         "Steps : explode NOAA results, filter required columns, pivot daily weather, "
         "add derived columns"
@@ -261,6 +289,7 @@ def main() -> int:
             output_path=output_path,
             quality_enabled=not args.skip_quality,
             mode=args.mode,
+            replace_where=replace_partition.replace_where if replace_partition else None,
         )
         df_silver = run_silver_noaa_weather(
             spark=spark,
@@ -271,6 +300,7 @@ def main() -> int:
             metrics_path=metrics_path,
             pipeline_run_id=context.pipeline_run_id,
             enable_quality=not args.skip_quality,
+            replace_partition=replace_partition,
         )
 
         print("Silver NOAA Weather saved.")

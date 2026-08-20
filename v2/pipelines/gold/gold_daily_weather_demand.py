@@ -18,8 +18,13 @@ from v2.config.paths import (
 from v2.config.spark import create_spark
 from v2.pipelines.gold.weather_consolidation import build_consolidated_daily_weather
 from v2.platform.delta import write_delta_table
-
-YEAR_MONTH_PARTITIONS = ("ano", "mes")
+from v2.platform.partitions import (
+    YEAR_MONTH_PARTITIONS,
+    YearMonthPartition,
+    filter_year_month_partition,
+    resolve_year_month_partition,
+    validate_replace_partition_write_mode,
+)
 
 
 def run_gold_daily_weather_demand(
@@ -29,7 +34,9 @@ def run_gold_daily_weather_demand(
     output_path: str,
     year: int = 2025,
     mode: str = "overwrite",
+    replace_partition: YearMonthPartition | None = None,
 ) -> DataFrame:
+    validate_replace_partition_write_mode(mode, replace_partition)
     calendar = build_calendar(spark, year)
     demand = build_daily_taxi_demand(spark.read.format("delta").load(tlc_input_path), year)
     weather = build_consolidated_daily_weather(
@@ -48,10 +55,17 @@ def run_gold_daily_weather_demand(
             F.col("sem_clima")
             | F.coalesce(F.col("registro_clima_incompleto"), F.lit(False)),
         )
+        .transform(lambda data_frame: filter_year_month_partition(data_frame, replace_partition))
         .orderBy("data")
     )
 
-    write_delta_table(df, output_path, mode=mode, partition_by=YEAR_MONTH_PARTITIONS)
+    write_delta_table(
+        df,
+        output_path,
+        mode=mode,
+        partition_by=YEAR_MONTH_PARTITIONS,
+        replace_where=replace_partition.replace_where if replace_partition else None,
+    )
 
     return df
 
@@ -129,9 +143,17 @@ def main() -> int:
     parser.add_argument("--noaa-input", default=None)
     parser.add_argument("--output", default=None)
     parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])
+    parser.add_argument("--replace-year", type=int, default=None)
+    parser.add_argument("--replace-month", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-count", action="store_true")
     args = parser.parse_args()
+    replace_partition = resolve_year_month_partition(
+        base_year=args.year,
+        replace_year=args.replace_year,
+        replace_month=args.replace_month,
+    )
+    validate_replace_partition_write_mode(args.mode, replace_partition)
 
     tlc_input_path = args.tlc_input if args.tlc_input else str(nyc_tlc_silver_dir(args.year))
     noaa_input_path = args.noaa_input if args.noaa_input else str(noaa_silver_dir(args.year))
@@ -142,6 +164,8 @@ def main() -> int:
     print(f"Output    : {output_path}")
     print("Format    : silver delta + calendar -> gold delta")
     print("Grain     : 1 row per day")
+    if replace_partition:
+        print(f"ReplaceWhere: {replace_partition.replace_where}")
 
     if args.dry_run:
         return 0
@@ -166,6 +190,7 @@ def main() -> int:
             output_path=output_path,
             year=args.year,
             mode=args.mode,
+            replace_partition=replace_partition,
         )
 
         print("Gold daily weather demand saved.")

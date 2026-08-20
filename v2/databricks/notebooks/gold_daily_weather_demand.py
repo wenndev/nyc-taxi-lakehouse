@@ -60,6 +60,10 @@ spark = get_spark()
 from v2.pipelines.gold.gold_daily_weather_demand import (  # noqa: E402
     run_gold_daily_weather_demand,
 )
+from v2.platform.partitions import (  # noqa: E402
+    resolve_year_month_partition,
+    validate_replace_partition_write_mode,
+)
 
 # COMMAND ----------
 
@@ -68,6 +72,8 @@ dbutils.widgets.text("tlc_input", "")
 dbutils.widgets.text("noaa_input", "")
 dbutils.widgets.text("output", "")
 dbutils.widgets.text("mode", "overwrite")
+dbutils.widgets.text("replace_year", "")
+dbutils.widgets.text("replace_month", "")
 dbutils.widgets.text("skip_count", "true")
 dbutils.widgets.text("dry_run", "false")
 
@@ -92,6 +98,14 @@ tlc_input_path = optional_widget("tlc_input")
 noaa_input_path = optional_widget("noaa_input")
 output_path = optional_widget("output")
 mode = widget("mode")
+replace_year = int(widget("replace_year")) if optional_widget("replace_year") else None
+replace_month = int(widget("replace_month")) if optional_widget("replace_month") else None
+replace_partition = resolve_year_month_partition(
+    base_year=year,
+    replace_year=replace_year,
+    replace_month=replace_month,
+)
+validate_replace_partition_write_mode(mode, replace_partition)
 skip_count = bool_widget("skip_count")
 dry_run = bool_widget("dry_run")
 
@@ -110,6 +124,8 @@ print(f"Output    : {output_path}")
 print(f"Year      : {year}")
 print("Format    : silver delta + calendar -> gold delta")
 print("Grain     : 1 row per day")
+if replace_partition:
+    print(f"ReplaceWhere: {replace_partition.replace_where}")
 
 if dry_run:
     dbutils.notebook.exit(
@@ -120,6 +136,9 @@ if dry_run:
                 "noaa_input": noaa_input_path,
                 "output": output_path,
                 "year": year,
+                "replace_where": (
+                    replace_partition.replace_where if replace_partition else None
+                ),
             }
         )
     )
@@ -131,6 +150,7 @@ df_gold = run_gold_daily_weather_demand(
     output_path=output_path,
     year=year,
     mode=mode,
+    replace_partition=replace_partition,
 )
 
 print("Gold daily weather demand saved.")
@@ -149,6 +169,9 @@ dbutils.notebook.exit(
             "noaa_input": noaa_input_path,
             "output": output_path,
             "year": year,
+            "replace_where": (
+                replace_partition.replace_where if replace_partition else None
+            ),
             "rows": rows,
         }
     )

@@ -281,11 +281,13 @@ metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/nyc
 pipeline_run_id=<adf_pipeline_run_id>
 skip_quality=false
 mode=overwrite
-start_date=2025-01-01
-end_date=2026-01-01
+replace_month=1
 skip_count=true
 dry_run=false
 ```
+
+Com `replace_month`, a Silver TLC deriva o intervalo mensal automaticamente e
+salva com `replaceWhere = ano = 2025 AND mes = 1`.
 
 ### silver_taxi_zone_lookup
 
@@ -313,6 +315,7 @@ metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/noa
 pipeline_run_id=<adf_pipeline_run_id>
 skip_quality=false
 mode=overwrite
+replace_month=1
 skip_count=false
 dry_run=false
 ```
@@ -355,6 +358,7 @@ tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
 noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 taxi_zone_lookup_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/taxi_zone_lookup
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/star_schema/2025
+replace_month=1
 mode=overwrite
 skip_count=true
 dry_run=false
@@ -379,6 +383,7 @@ year=2025
 tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
 noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
+replace_month=1
 mode=overwrite
 skip_count=true
 dry_run=false

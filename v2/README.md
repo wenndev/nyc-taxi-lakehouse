@@ -243,17 +243,34 @@ Bronze e dimensoes pequenas ficam sem particionamento por enquanto. A Bronze
 preserva melhor o dado de entrada e as dimensoes pequenas nao ganham muito com
 pastas particionadas.
 
-Para a futura execucao incremental no Databricks, o mesmo helper permite evoluir
-para reprocessamento por recorte:
+Para execucao incremental/backfill, os pipelines temporais aceitam
+`replace_month` e, opcionalmente, `replace_year`. Quando `replace_year` nao e
+informado, o pipeline usa o valor de `year`.
 
 ```text
-replaceWhere="ano = 2025 AND mes = 1"
-partitionBy=["ano", "mes"]
+year=2025
+replace_month=1
+
+replaceWhere gerado:
+ano = 2025 AND mes = 1
 ```
 
-O particionamento ja esta ativo. O `replaceWhere` ainda fica preparado para a
-estrategia incremental/backfill, quando a execucao por mes ou por dia for
-fechada no Databricks/ADF.
+Isso permite reprocessar apenas uma particao mensal sem sobrescrever todos os
+meses ja publicados naquele caminho Delta.
+
+Exemplo local:
+
+```bash
+poetry run silver-nyc-tlc \
+  --year 2025 \
+  --replace-month 1 \
+  --skip-count
+
+poetry run gold-daily-weather-demand \
+  --year 2025 \
+  --replace-month 1 \
+  --skip-count
+```
 
 ## Ingestion
 

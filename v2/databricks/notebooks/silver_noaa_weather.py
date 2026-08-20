@@ -58,6 +58,10 @@ spark = get_spark()
 # COMMAND ----------
 
 from v2.pipelines.silver.silver_noaa_weather import run_silver_noaa_weather  # noqa: E402
+from v2.platform.partitions import (  # noqa: E402
+    resolve_year_month_partition,
+    validate_replace_partition_write_mode,
+)
 
 # COMMAND ----------
 
@@ -70,6 +74,8 @@ dbutils.widgets.text("metrics_output", "")
 dbutils.widgets.text("pipeline_run_id", "")
 dbutils.widgets.text("skip_quality", "false")
 dbutils.widgets.text("mode", "overwrite")
+dbutils.widgets.text("replace_year", "")
+dbutils.widgets.text("replace_month", "")
 dbutils.widgets.text("skip_count", "true")
 dbutils.widgets.text("dry_run", "false")
 
@@ -98,6 +104,14 @@ metrics_path = optional_widget("metrics_output")
 pipeline_run_id = optional_widget("pipeline_run_id")
 skip_quality = bool_widget("skip_quality")
 mode = widget("mode")
+replace_year = int(widget("replace_year")) if optional_widget("replace_year") else None
+replace_month = int(widget("replace_month")) if optional_widget("replace_month") else None
+replace_partition = resolve_year_month_partition(
+    base_year=year,
+    replace_year=replace_year,
+    replace_month=replace_month,
+)
+validate_replace_partition_write_mode(mode, replace_partition)
 skip_count = bool_widget("skip_count")
 dry_run = bool_widget("dry_run")
 
@@ -120,6 +134,8 @@ print(f"Metrics   : {metrics_path}")
 print(f"Year  : {year}")
 print(f"Dataset: {datasetid}")
 print("Format: delta -> delta")
+if replace_partition:
+    print(f"ReplaceWhere: {replace_partition.replace_where}")
 print(
     "Steps : explode NOAA results, filter required columns, pivot daily weather, "
     "add derived columns"
@@ -137,6 +153,9 @@ if dry_run:
                 "metrics_output": metrics_path,
                 "year": year,
                 "datasetid": datasetid,
+                "replace_where": (
+                    replace_partition.replace_where if replace_partition else None
+                ),
                 "skip_quality": skip_quality,
             }
         )
@@ -151,6 +170,7 @@ df_silver = run_silver_noaa_weather(
     metrics_path=metrics_path,
     pipeline_run_id=pipeline_run_id,
     enable_quality=not skip_quality,
+    replace_partition=replace_partition,
 )
 
 print("Silver NOAA Weather saved.")
@@ -171,6 +191,9 @@ dbutils.notebook.exit(
             "metrics_output": metrics_path,
             "year": year,
             "datasetid": datasetid,
+            "replace_where": (
+                replace_partition.replace_where if replace_partition else None
+            ),
             "skip_quality": skip_quality,
             "rows": rows,
         }

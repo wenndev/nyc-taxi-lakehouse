@@ -37,6 +37,13 @@ from v2.pipelines.quality.storage import write_quality_outputs
 from v2.pipelines.quality.validators import validate_tlc_data
 from v2.platform.delta import write_delta_table
 from v2.platform.logging import configure_logging, get_logger, log_event
+from v2.platform.partitions import (
+    YEAR_MONTH_PARTITIONS,
+    YearMonthPartition,
+    filter_year_month_partition,
+    resolve_year_month_partition,
+    validate_replace_partition_write_mode,
+)
 from v2.platform.run_context import RunContext
 
 COLUMN_RENAMES = {
@@ -83,7 +90,6 @@ DEDUPLICATION_COLUMNS = [
     "id_local_chegada",
     "valor_total",
 ]
-YEAR_MONTH_PARTITIONS = ("ano", "mes")
 
 
 def run_silver_nyc_tlc(
@@ -99,7 +105,12 @@ def run_silver_nyc_tlc(
     pipeline_run_id: str | None = None,
     enable_quality: bool = True,
     quality_config: TLCQualityConfig | None = None,
+    replace_partition: YearMonthPartition | None = None,
 ) -> DataFrame:
+    validate_replace_partition_write_mode(mode, replace_partition)
+    if replace_partition and not start_date and not end_date:
+        start_date, end_date = replace_partition.date_range()
+
     df = spark.read.format("delta").load(input_path)
     df = rename_columns(df)
     df = filter_date_range(df, start_date=start_date, end_date=end_date)
@@ -139,8 +150,15 @@ def run_silver_nyc_tlc(
     df = add_derived_columns(df)
     df = add_semantic_columns(df)
     df = drop_business_duplicates(df)
+    df = filter_year_month_partition(df, replace_partition)
 
-    write_delta_table(df, output_path, mode=mode, partition_by=YEAR_MONTH_PARTITIONS)
+    write_delta_table(
+        df,
+        output_path,
+        mode=mode,
+        partition_by=YEAR_MONTH_PARTITIONS,
+        replace_where=replace_partition.replace_where if replace_partition else None,
+    )
 
     return df
 
@@ -400,10 +418,22 @@ def main() -> int:
     parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])
     parser.add_argument("--start-date", default=None)
     parser.add_argument("--end-date", default=None)
+    parser.add_argument("--replace-year", type=int, default=None)
+    parser.add_argument("--replace-month", type=int, default=None)
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-count", action="store_true")
     args = parser.parse_args()
+    replace_partition = resolve_year_month_partition(
+        base_year=args.year,
+        replace_year=args.replace_year,
+        replace_month=args.replace_month,
+    )
+    validate_replace_partition_write_mode(args.mode, replace_partition)
+    start_date = args.start_date
+    end_date = args.end_date
+    if replace_partition and not start_date and not end_date:
+        start_date, end_date = replace_partition.date_range()
 
     input_path = args.input if args.input else str(nyc_tlc_bronze_dir(args.year))
     output_path = args.output if args.output else str(nyc_tlc_silver_dir(args.year))
@@ -420,8 +450,8 @@ def main() -> int:
     context = RunContext.create(
         pipeline_name="silver-nyc-tlc",
         year=args.year,
-        start_date=args.start_date,
-        end_date=args.end_date,
+        start_date=start_date,
+        end_date=end_date,
         pipeline_run_id=args.pipeline_run_id,
     )
     logger = get_logger(__name__)
@@ -432,15 +462,15 @@ def main() -> int:
     print(f"Metrics   : {metrics_path}")
     print(f"Pipeline run id: {context.pipeline_run_id}")
     print("Format: delta -> delta")
+    if replace_partition:
+        print(f"ReplaceWhere: {replace_partition.replace_where}")
     print(
         "Steps : rename columns, validate quality, fill nulls, "
         "add derived columns, add semantic columns, drop duplicates"
     )
     print(f"Quality: {'disabled' if args.skip_quality else 'enabled'}")
-    if args.start_date or args.end_date:
-        print(
-            f"Date filter: {args.start_date or 'beginning'} -> {args.end_date or 'end'}"
-        )
+    if start_date or end_date:
+        print(f"Date filter: {start_date or 'beginning'} -> {end_date or 'end'}")
     if args.limit:
         print(f"Limit : {args.limit} rows")
 
@@ -463,20 +493,22 @@ def main() -> int:
             output_path=output_path,
             quality_enabled=not args.skip_quality,
             mode=args.mode,
+            replace_where=replace_partition.replace_where if replace_partition else None,
         )
         df_silver = run_silver_nyc_tlc(
             spark=spark,
             input_path=input_path,
             output_path=output_path,
             mode=args.mode,
-            start_date=args.start_date,
-            end_date=args.end_date,
+            start_date=start_date,
+            end_date=end_date,
             limit_rows=args.limit,
             quarantine_path=quarantine_path,
             metrics_path=metrics_path,
             pipeline_run_id=context.pipeline_run_id,
             enable_quality=not args.skip_quality,
             quality_config=TLCQualityConfig.for_year(args.year),
+            replace_partition=replace_partition,
         )
 
         print("Silver NYC TLC saved.")

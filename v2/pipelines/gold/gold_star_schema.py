@@ -20,8 +20,13 @@ from v2.config.paths import (
 from v2.config.spark import create_spark
 from v2.pipelines.gold.weather_consolidation import build_consolidated_daily_weather
 from v2.platform.delta import write_delta_table
-
-YEAR_MONTH_PARTITIONS = ("ano", "mes")
+from v2.platform.partitions import (
+    YEAR_MONTH_PARTITIONS,
+    YearMonthPartition,
+    filter_year_month_partition,
+    resolve_year_month_partition,
+    validate_replace_partition_write_mode,
+)
 
 
 @dataclass
@@ -40,7 +45,9 @@ def run_gold_star_schema(
     taxi_zone_lookup_input_path: str | None = None,
     year: int = 2025,
     mode: str = "overwrite",
+    replace_partition: YearMonthPartition | None = None,
 ) -> GoldStarSchemaTables:
+    validate_replace_partition_write_mode(mode, replace_partition)
     df_tlc = spark.read.format("delta").load(tlc_input_path)
     df_noaa = spark.read.format("delta").load(noaa_input_path)
     df_taxi_zone_lookup = (
@@ -59,6 +66,7 @@ def run_gold_star_schema(
         dim_localizacao=dim_localizacao,
         year=year,
     )
+    fact_trips = filter_year_month_partition(fact_trips, replace_partition)
 
     tables = GoldStarSchemaTables(
         dim_data=dim_data,
@@ -66,7 +74,14 @@ def run_gold_star_schema(
         dim_localizacao=dim_localizacao,
         fact_trips=fact_trips,
     )
-    write_gold_tables(tables, output_path=output_path, mode=mode)
+    write_gold_tables(
+        tables,
+        output_path=output_path,
+        mode=mode,
+        fact_replace_where=(
+            replace_partition.replace_where if replace_partition else None
+        ),
+    )
 
     return tables
 
@@ -266,6 +281,7 @@ def write_gold_tables(
     tables: GoldStarSchemaTables,
     output_path: str,
     mode: str,
+    fact_replace_where: str | None = None,
 ) -> None:
     table_write_configs = [
         ("dim_data", tables.dim_data, None),
@@ -279,6 +295,9 @@ def write_gold_tables(
             table_path(output_path, table_name),
             mode=mode,
             partition_by=partition_by,
+            replace_where=(
+                fact_replace_where if table_name == "fact_trips" else None
+            ),
         )
 
 
@@ -307,9 +326,17 @@ def main() -> int:
     parser.add_argument("--taxi-zone-lookup-input", default=None)
     parser.add_argument("--output", default=None)
     parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])
+    parser.add_argument("--replace-year", type=int, default=None)
+    parser.add_argument("--replace-month", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--skip-count", action="store_true")
     args = parser.parse_args()
+    replace_partition = resolve_year_month_partition(
+        base_year=args.year,
+        replace_year=args.replace_year,
+        replace_month=args.replace_month,
+    )
+    validate_replace_partition_write_mode(args.mode, replace_partition)
 
     tlc_input_path = args.tlc_input if args.tlc_input else str(nyc_tlc_silver_dir(args.year))
     noaa_input_path = args.noaa_input if args.noaa_input else str(noaa_silver_dir(args.year))
@@ -326,6 +353,8 @@ def main() -> int:
     print(f"Output    : {output_path}")
     print("Format    : silver delta -> gold star schema delta")
     print("Tables    : dim_data, dim_clima, dim_localizacao, fact_trips")
+    if replace_partition:
+        print(f"Fact replaceWhere: {replace_partition.replace_where}")
 
     if args.dry_run:
         return 0
@@ -356,6 +385,7 @@ def main() -> int:
             output_path=output_path,
             year=args.year,
             mode=args.mode,
+            replace_partition=replace_partition,
         )
 
         print("Gold Star Schema saved.")

@@ -59,6 +59,10 @@ spark = get_spark()
 
 from v2.pipelines.quality.config import TLCQualityConfig  # noqa: E402
 from v2.pipelines.silver.silver_nyc_tlc import run_silver_nyc_tlc  # noqa: E402
+from v2.platform.partitions import (  # noqa: E402
+    resolve_year_month_partition,
+    validate_replace_partition_write_mode,
+)
 
 # COMMAND ----------
 
@@ -72,6 +76,8 @@ dbutils.widgets.text("skip_quality", "false")
 dbutils.widgets.text("mode", "overwrite")
 dbutils.widgets.text("start_date", "")
 dbutils.widgets.text("end_date", "")
+dbutils.widgets.text("replace_year", "")
+dbutils.widgets.text("replace_month", "")
 dbutils.widgets.text("limit", "")
 dbutils.widgets.text("skip_count", "true")
 dbutils.widgets.text("dry_run", "false")
@@ -102,6 +108,16 @@ skip_quality = bool_widget("skip_quality")
 mode = widget("mode")
 start_date = optional_widget("start_date")
 end_date = optional_widget("end_date")
+replace_year = int(widget("replace_year")) if optional_widget("replace_year") else None
+replace_month = int(widget("replace_month")) if optional_widget("replace_month") else None
+replace_partition = resolve_year_month_partition(
+    base_year=year,
+    replace_year=replace_year,
+    replace_month=replace_month,
+)
+validate_replace_partition_write_mode(mode, replace_partition)
+if replace_partition and not start_date and not end_date:
+    start_date, end_date = replace_partition.date_range()
 limit_rows = int(widget("limit")) if optional_widget("limit") else None
 skip_count = bool_widget("skip_count")
 dry_run = bool_widget("dry_run")
@@ -124,6 +140,8 @@ print(f"Quarantine: {quarantine_path}")
 print(f"Metrics   : {metrics_path}")
 print(f"Year  : {year}")
 print("Format: delta -> delta")
+if replace_partition:
+    print(f"ReplaceWhere: {replace_partition.replace_where}")
 print(
     "Steps : rename columns, validate quality, fill nulls, "
     "add derived columns, add semantic columns, drop duplicates"
@@ -144,6 +162,9 @@ if dry_run:
                 "quarantine_output": quarantine_path,
                 "metrics_output": metrics_path,
                 "year": year,
+                "replace_where": (
+                    replace_partition.replace_where if replace_partition else None
+                ),
                 "skip_quality": skip_quality,
             }
         )
@@ -162,6 +183,7 @@ df_silver = run_silver_nyc_tlc(
     pipeline_run_id=pipeline_run_id,
     enable_quality=not skip_quality,
     quality_config=TLCQualityConfig.for_year(year),
+    replace_partition=replace_partition,
 )
 
 print("Silver NYC TLC saved.")
@@ -181,6 +203,9 @@ dbutils.notebook.exit(
             "quarantine_output": quarantine_path,
             "metrics_output": metrics_path,
             "year": year,
+            "replace_where": (
+                replace_partition.replace_where if replace_partition else None
+            ),
             "skip_quality": skip_quality,
             "rows": rows,
         }
