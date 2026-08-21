@@ -162,14 +162,14 @@ Se a tabela for managed table com liquid clustering, nao usar `ZORDER`.
 
 ## Aplicacoes Diretas Na V2
 
-Melhorias que fazem sentido antes ou durante a ida para cloud:
+Melhorias que fazem sentido durante ou depois da primeira execucao cloud:
 
 ```text
 1. Validar dim_localizacao enriquecida com Taxi Zone Lookup na Gold full.
-2. Criar notebook de validacao NOAA.
-3. Criar notebook de validacao Gold full.
-4. Criar script/notebook de manutencao Delta para Databricks.
-5. Depois da execucao full, decidir entre predictive optimization, liquid clustering ou OPTIMIZE/ZORDER.
+2. Rodar validadores Silver e Gold no Databricks real como gates do ADF.
+3. Criar script/notebook de manutencao Delta para Databricks, se necessario.
+4. Depois da execucao full, decidir entre predictive optimization, liquid clustering ou OPTIMIZE/ZORDER.
+5. Evoluir para ingestao incremental automatica se o volume/custo justificar.
 ```
 
 ## Fontes Oficiais Consultadas

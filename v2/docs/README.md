@@ -11,7 +11,10 @@ fluxo dev local.
 Para estudar o projeto inteiro, comece pelo `README.md` da raiz e depois pelo
 `v2/README.md`.
 
-## Ordem Dentro De `v2/docs`
+## Ordem De Leitura Recomendada
+
+A numeracao dos arquivos ajuda a organizar a pasta, mas a melhor ordem para
+estudar o projeto nao precisa seguir exatamente a ordem numerica.
 
 1. `00_visao_geral.md` - historia, problema da V1 e solucao V2/V2.5.
 2. `02_dicionario_dados.md` - campos e regras de negocio.

@@ -847,20 +847,20 @@ quarantine_output=/Volumes/<catalog>/<schema>/<volume>/delta/quarantine/nyc_tlc/
 metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/nyc_tlc/yellow/2025
 pipeline_run_id=@{pipeline().RunId}
 mode=overwrite
-replace_month=1
 skip_quality=false
 skip_count=true
 dry_run=false
 ```
 
-Quando `replace_month` e informado, o notebook gera internamente:
+Para reprocessar apenas um mes, adicionar:
 
 ```text
-replaceWhere = ano = 2025 AND mes = 1
+replace_month=1
 ```
 
+Nesse caso, o notebook gera internamente `replaceWhere = ano = 2025 AND mes = 1`.
 Na Silver TLC, se `start_date` e `end_date` nao forem passados, o intervalo do
-mes e derivado automaticamente.
+mes tambem e derivado automaticamente.
 
 ### silver_taxi_zone_lookup
 
@@ -871,7 +871,6 @@ quarantine_output=/Volumes/<catalog>/<schema>/<volume>/delta/quarantine/nyc_tlc/
 metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/nyc_tlc/taxi_zone_lookup
 pipeline_run_id=@{pipeline().RunId}
 mode=overwrite
-replace_month=1
 skip_quality=false
 skip_count=true
 dry_run=false
@@ -931,10 +930,15 @@ tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
 noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 taxi_zone_lookup_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/taxi_zone_lookup
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/star_schema/2025
-replace_month=1
 mode=overwrite
 skip_count=true
 dry_run=false
+```
+
+Para reprocessar apenas a `fact_trips` de um mes, adicionar:
+
+```text
+replace_month=1
 ```
 
 ### validate_gold_star_schema
@@ -956,10 +960,15 @@ year=2025
 tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
 noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
-replace_month=1
 mode=overwrite
 skip_count=true
 dry_run=false
+```
+
+Para reprocessar apenas um mes da Gold diaria, adicionar:
+
+```text
+replace_month=1
 ```
 
 ### validate_gold_daily_weather_demand
@@ -1231,16 +1240,19 @@ daily_total_trips dev = 97060
 daily_days_without_weather = 0
 ```
 
-## 21. Proximo Passo Recomendado
+## 21. Estado Antes De Ir Para Azure
 
-Antes de Azure:
+Antes de criar a infraestrutura cloud, a V2 local deve estar neste estado:
 
 ```text
-1. rodar testes automatizados da V2
-2. revisar notebooks Databricks atuais
-3. criar ou revisar plano ADF final
-4. manter `arquitetura_v1.jpg` como referencia historica da V1
-5. depois iniciar infra Azure
+1. testes automatizados da V2 passando
+2. fluxo dev end-to-end passando
+3. notebooks Databricks revisados
+4. plano ADF revisado
+5. NOAA paginada validada
+6. particionamento Delta ativo em tabelas temporais
+7. reprocessamento mensal com replace_month/replaceWhere validado
+8. `arquitetura_v1.jpg` mantida apenas como referencia historica da V1
 ```
 
 Comando oficial de testes:
@@ -1255,8 +1267,11 @@ Quando Azure estiver pronto:
 1. subir repo no Databricks
 2. configurar secrets
 3. configurar paths cloud
-4. rodar ingestion NOAA primeiro em dry-run
-5. rodar pipeline completo com ADF
-6. validar Gold
-7. seguir para EDA, Power BI e ML
+4. rodar notebooks com dry_run=true
+5. rodar ingestion NOAA e conferir downloaded_results == expected_count
+6. rodar lookup completo
+7. rodar primeira carga full sem replace_month
+8. usar replace_month apenas para backfill/reprocessamento mensal
+9. validar Silver e Gold
+10. seguir para EDA, Power BI e ML
 ```

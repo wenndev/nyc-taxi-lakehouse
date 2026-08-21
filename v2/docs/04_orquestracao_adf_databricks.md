@@ -185,6 +185,39 @@ dry_run=false
 15. `gold-daily-weather-demand`
 16. `validate-gold-daily-weather-demand`
 
+## ForEach Mensal Para Backfill
+
+Para a primeira carga cloud, a recomendacao e rodar full sem `replace_month` e
+validar as tabelas com 365 dias.
+
+Depois da primeira carga, para corrigir ou reprocessar um mes especifico, usar
+um ForEach mensal:
+
+```text
+ForEach month in [1, 2, ..., 12]
+  -> silver_nyc_tlc com replace_month=<month>
+  -> validate_silver_nyc_tlc
+  -> gold_star_schema com replace_month=<month>
+  -> validate_gold_star_schema
+  -> gold_daily_weather_demand com replace_month=<month>
+  -> validate_gold_daily_weather_demand
+```
+
+O `replace_month` gera internamente:
+
+```text
+replaceWhere = ano = 2025 AND mes = <month>
+```
+
+O Taxi Zone Lookup nao entra no ForEach mensal. Ele e uma referencia pequena e
+deve ser carregado uma vez antes das Silvers e Golds.
+
+A ingestao NOAA tambem nao precisa de ForEach por offset no ADF. O notebook
+Databricks faz a paginacao internamente ate `downloaded_results == expected_count`.
+Se for reprocessar apenas um mes da Silver NOAA, o notebook tambem aceita
+`replace_month`, mas a primeira carga NOAA deve ser full para a validacao de
+365 dias passar.
+
 ## O Que Ainda Falta Fazer Quando o Azure Voltar
 
 - Criar Storage Account/ADLS.
@@ -197,6 +230,7 @@ dry_run=false
 - Passar `quarantine_output`, `metrics_output` e `pipeline_run_id` para as
   Silvers TLC, Taxi Zone Lookup e NOAA no Databricks.
 - Configurar os notebooks `validate_silver_*` como gates depois da Silver.
+- Configurar `replace_month` no ForEach mensal da TLC e das Golds.
 
 Roteiro operacional detalhado:
 

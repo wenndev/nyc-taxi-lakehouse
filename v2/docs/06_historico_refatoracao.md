@@ -466,8 +466,8 @@ O que deve ser reaproveitado:
 - Validar `dim_localizacao` enriquecida com Taxi Zone Lookup na Gold completa.
 - Treinar/analisar ML usando a Gold diaria completa no Databricks.
 - Evoluir uma futura V3 com clima por hora ou faixa horaria.
-- Planejar pipelines incrementais.
-- Planejar particionamento Bronze.
+- Evoluir de backfill mensal com `replaceWhere` para ingestao incremental automatica, se fizer sentido.
+- Avaliar particionamento Bronze apenas se houver ganho real na execucao cloud.
 - Implementar infraestrutura Azure novamente.
 - Configurar CI/CD.
 

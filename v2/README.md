@@ -573,6 +573,9 @@ fact_trips.clima_id_nulo = 0
 - Silver TLC com colunas temporais, duracao, passageiros, pagamento e flags.
 - Gold diaria usando calendario completo para evitar perda de dias no join.
 - Gold dimensional com `dim_data`, `dim_clima`, `dim_localizacao` enriquecida e `fact_trips`.
+- Particionamento Delta por `ano` e `mes` nas tabelas temporais.
+- Reprocessamento mensal idempotente com `replace_month` e `replaceWhere`.
+- Wrappers Databricks preparados para receber parametros do ADF.
 
 ## Visualizacao com Jupyter
 

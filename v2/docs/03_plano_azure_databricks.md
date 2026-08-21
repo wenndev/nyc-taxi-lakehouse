@@ -281,13 +281,13 @@ metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/nyc
 pipeline_run_id=<adf_pipeline_run_id>
 skip_quality=false
 mode=overwrite
-replace_month=1
 skip_count=true
 dry_run=false
 ```
 
-Com `replace_month`, a Silver TLC deriva o intervalo mensal automaticamente e
-salva com `replaceWhere = ano = 2025 AND mes = 1`.
+Para reprocessar apenas um mes, adicionar `replace_month=1`. Com
+`replace_month`, a Silver TLC deriva o intervalo mensal automaticamente e salva
+com `replaceWhere = ano = 2025 AND mes = 1`.
 
 ### silver_taxi_zone_lookup
 
@@ -315,10 +315,13 @@ metrics_output=/Volumes/<catalog>/<schema>/<volume>/delta/monitoring/quality/noa
 pipeline_run_id=<adf_pipeline_run_id>
 skip_quality=false
 mode=overwrite
-replace_month=1
 skip_count=false
 dry_run=false
 ```
+
+Para reprocessar apenas um mes da Silver NOAA, adicionar `replace_month=1`.
+Na primeira carga full, nao usar `replace_month` se a validacao esperada for
+365 dias.
 
 ### validate_silver_nyc_tlc
 
@@ -358,11 +361,12 @@ tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
 noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 taxi_zone_lookup_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/taxi_zone_lookup
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/star_schema/2025
-replace_month=1
 mode=overwrite
 skip_count=true
 dry_run=false
 ```
+
+Para reprocessar apenas a `fact_trips` de um mes, adicionar `replace_month=1`.
 
 ### validate_gold_star_schema
 
@@ -383,11 +387,12 @@ year=2025
 tlc_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/nyc_tlc/yellow/2025
 noaa_input=/Volumes/<catalog>/<schema>/<volume>/delta/silver/noaa/ghcnd_nyc/2025
 output=/Volumes/<catalog>/<schema>/<volume>/delta/gold/daily_weather_demand/2025
-replace_month=1
 mode=overwrite
 skip_count=true
 dry_run=false
 ```
+
+Para reprocessar apenas um mes da Gold diaria, adicionar `replace_month=1`.
 
 ### validate_gold_daily_weather_demand
 
@@ -481,7 +486,7 @@ chaves_orfas == 0
 11. Rodar Gold diaria com `skip_count=true`.
 12. Rodar `validate_gold_daily_weather_demand`.
 13. Rodar queries de validacao exploratorias no Databricks se quiser investigar.
-14. So depois pensar em OPTIMIZE, ZORDER, incremental e ML.
+14. So depois pensar em OPTIMIZE/ZORDER, ingestao incremental automatica e ML.
 
 ## Pontos De Atencao
 
@@ -491,8 +496,10 @@ chaves_orfas == 0
 - As Silvers TLC, Taxi Zone Lookup e NOAA ja executam Data Quality; em caso de
   `FAIL`, a Silver correspondente nao deve ser publicada.
 - A Silver Taxi Zone Lookup deve ficar com `PASS`, porque e uma referencia pequena.
-- A V2 ainda nao implementa pipeline incremental; atualmente o padrao e
-  `overwrite`.
+- A V2 ja implementa reprocessamento mensal com `replace_month` e `replaceWhere`
+  nas tabelas temporais. Isso permite backfill mensal idempotente.
+- A V2 ainda nao implementa ingestao incremental automatica por arquivos novos,
+  CDC ou Auto Loader; isso fica para uma evolucao posterior.
 - `OPTIMIZE` e `ZORDER` devem ser aplicados depois da primeira execucao full,
   nao antes.
 
@@ -501,10 +508,10 @@ chaves_orfas == 0
 Melhorias para uma segunda etapa:
 
 ```text
-1. Validar a Gold full com Taxi Zone Lookup
-2. Criar checks automatizados de qualidade da Gold
-3. Definir particionamento fisico das tabelas Delta
-4. Avaliar predictive optimization, liquid clustering ou OPTIMIZE/ZORDER
-5. Planejar processamento incremental
-6. Criar camada ML a partir da Gold diaria
+1. Validar a Gold full com Taxi Zone Lookup.
+2. Rodar queries exploratorias de qualidade/performance no Databricks.
+3. Avaliar predictive optimization, liquid clustering ou OPTIMIZE/ZORDER.
+4. Criar job de manutencao Delta se a tabela ficar com muitos arquivos pequenos.
+5. Evoluir para ingestao incremental automatica se fizer sentido.
+6. Criar camada ML a partir da Gold diaria.
 ```
