@@ -233,6 +233,9 @@ datatypeids=PRCP,TMAX,TMIN,SNOW,SNWD
 units=metric
 limit=1000
 initial_offset=1
+sleep_seconds=0.25
+max_retries=3
+retry_jitter_seconds=1.0
 overwrite=false
 dry_run=false
 ```

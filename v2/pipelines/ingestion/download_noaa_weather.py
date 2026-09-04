@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import random
 import time
 from datetime import date
 from pathlib import Path
@@ -49,6 +50,7 @@ def main() -> int:
     parser.add_argument("--allow-global", action="store_true")
     parser.add_argument("--sleep-seconds", type=float, default=0.25)
     parser.add_argument("--max-retries", type=int, default=3)
+    parser.add_argument("--retry-jitter-seconds", type=float, default=0.0)
     args = parser.parse_args()
 
     default_to_nyc_location(args)
@@ -113,6 +115,7 @@ def main() -> int:
         overwrite=args.overwrite,
         sleep_seconds=args.sleep_seconds,
         max_retries=args.max_retries,
+        retry_jitter_seconds=args.retry_jitter_seconds,
     )
 
 
@@ -176,6 +179,15 @@ def validate_args(args: argparse.Namespace, datatypes: list[str]) -> None:
 
     if args.initial_offset < 1:
         raise ValueError("Initial offset must be >= 1")
+
+    if args.sleep_seconds < 0:
+        raise ValueError("Sleep seconds must be >= 0")
+
+    if args.max_retries < 1:
+        raise ValueError("Max retries must be >= 1")
+
+    if args.retry_jitter_seconds < 0:
+        raise ValueError("Retry jitter seconds must be >= 0")
 
     if not datatypes:
         raise ValueError("At least one datatypeid is required")
@@ -274,6 +286,7 @@ def download_pages(
     overwrite: bool,
     sleep_seconds: float,
     max_retries: int,
+    retry_jitter_seconds: float,
 ) -> int:
     offset = initial_offset
     page_number = 1
@@ -294,6 +307,7 @@ def download_pages(
                 token=token,
                 max_retries=max_retries,
                 sleep_seconds=sleep_seconds,
+                retry_jitter_seconds=retry_jitter_seconds,
             )
             write_json(destination, payload)
             print(f"Saved: {destination}")
@@ -333,6 +347,9 @@ def download_pages(
         base_params=base_params,
         limit=limit,
         initial_offset=initial_offset,
+        sleep_seconds=sleep_seconds,
+        max_retries=max_retries,
+        retry_jitter_seconds=retry_jitter_seconds,
         storage_datasetid=storage_datasetid,
         pages=page_number,
         downloaded_results=downloaded_results,
@@ -357,6 +374,7 @@ def request_json(
     token: str,
     max_retries: int,
     sleep_seconds: float,
+    retry_jitter_seconds: float = 0.0,
 ) -> dict[str, Any]:
     last_error: Exception | None = None
 
@@ -367,10 +385,31 @@ def request_json(
                 return json.loads(response.read().decode("utf-8"))
         except (HTTPError, URLError, TimeoutError) as exc:
             last_error = exc
-            print(f"Attempt {attempt}/{max_retries} failed: {exc}")
-            time.sleep(sleep_seconds * attempt)
+            wait_seconds = calculate_retry_wait_seconds(
+                attempt=attempt,
+                sleep_seconds=sleep_seconds,
+                retry_jitter_seconds=retry_jitter_seconds,
+            )
+            print(
+                f"Attempt {attempt}/{max_retries} failed: {exc}. "
+                f"Retrying in {wait_seconds:.2f}s"
+            )
+            time.sleep(wait_seconds)
 
     raise RuntimeError(f"NOAA request failed after {max_retries} attempts") from last_error
+
+
+def calculate_retry_wait_seconds(
+    attempt: int,
+    sleep_seconds: float,
+    retry_jitter_seconds: float = 0.0,
+) -> float:
+    base_wait = sleep_seconds * attempt
+
+    if retry_jitter_seconds <= 0:
+        return base_wait
+
+    return base_wait + random.uniform(0, retry_jitter_seconds)
 
 
 def read_json(path: Path) -> dict[str, Any]:
@@ -399,6 +438,9 @@ def write_manifest(
     base_params: list[tuple[str, str]],
     limit: int,
     initial_offset: int,
+    sleep_seconds: float,
+    max_retries: int,
+    retry_jitter_seconds: float,
     storage_datasetid: str,
     pages: int,
     downloaded_results: int,
@@ -413,6 +455,9 @@ def write_manifest(
         "storage_datasetid": storage_datasetid,
         "limit": limit,
         "initial_offset": initial_offset,
+        "sleep_seconds": sleep_seconds,
+        "max_retries": max_retries,
+        "retry_jitter_seconds": retry_jitter_seconds,
         "pages": pages,
         "downloaded_results": downloaded_results,
         "expected_count": expected_count,

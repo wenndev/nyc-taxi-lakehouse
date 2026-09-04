@@ -81,6 +81,7 @@ dbutils.widgets.text("secret_key", "noaa-token")
 dbutils.widgets.text("overwrite", "false")
 dbutils.widgets.text("sleep_seconds", "0.25")
 dbutils.widgets.text("max_retries", "3")
+dbutils.widgets.text("retry_jitter_seconds", "0.0")
 dbutils.widgets.text("dry_run", "false")
 
 # COMMAND ----------
@@ -119,6 +120,9 @@ class Args:
     end_date: str | None
     limit: int
     initial_offset: int
+    sleep_seconds: float
+    max_retries: int
+    retry_jitter_seconds: float
     stationid: list[str] | None
     locationid: list[str] | None
     allow_global: bool
@@ -129,6 +133,9 @@ args.start_date = optional_widget("start_date")
 args.end_date = optional_widget("end_date")
 args.limit = int(widget("limit"))
 args.initial_offset = int(widget("initial_offset"))
+args.sleep_seconds = float(widget("sleep_seconds"))
+args.max_retries = int(widget("max_retries"))
+args.retry_jitter_seconds = float(widget("retry_jitter_seconds"))
 args.stationid = csv_widget("stationid")
 args.locationid = csv_widget("locationid")
 args.allow_global = False
@@ -147,8 +154,9 @@ storage_datasetid = resolve_storage_datasetid(
 )
 overwrite = bool_widget("overwrite")
 dry_run = bool_widget("dry_run")
-sleep_seconds = float(widget("sleep_seconds"))
-max_retries = int(widget("max_retries"))
+sleep_seconds = args.sleep_seconds
+max_retries = args.max_retries
+retry_jitter_seconds = args.retry_jitter_seconds
 secret_scope = optional_widget("secret_scope")
 secret_key = optional_widget("secret_key")
 
@@ -205,6 +213,7 @@ exit_code = download_pages(
     overwrite=overwrite,
     sleep_seconds=sleep_seconds,
     max_retries=max_retries,
+    retry_jitter_seconds=retry_jitter_seconds,
 )
 
 if exit_code != 0:

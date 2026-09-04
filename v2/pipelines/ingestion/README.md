@@ -59,6 +59,9 @@ Parametros importantes:
 --stationid     pode repetir
 --locationid    pode repetir
 --limit         maximo 1000 na API CDO
+--max-retries   quantidade de tentativas por request
+--sleep-seconds base do backoff entre tentativas
+--retry-jitter-seconds variacao aleatoria somada ao backoff
 --output        destino raw local
 --storage-datasetid nome usado apenas para organizar a pasta local/cloud
 ```

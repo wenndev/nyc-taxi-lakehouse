@@ -567,6 +567,7 @@ fact_trips.clima_id_nulo = 0
 ## Evolucoes da V1 ja enderecadas
 
 - Paginacao da API NOAA com `offset`.
+- Retry/backoff com jitter opcional no consumo da API NOAA.
 - Desenho V2.5 para clima NYC consolidado usando varias estacoes NOAA.
 - Data Quality modular para NOAA e NYC TLC entre Bronze e Silver.
 - Taxi Zone Lookup com Bronze, Silver e Data Quality para enriquecer `dim_localizacao`.

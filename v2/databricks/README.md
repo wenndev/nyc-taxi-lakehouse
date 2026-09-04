@@ -111,6 +111,9 @@ output
 storage_datasetid
 secret_scope
 secret_key
+sleep_seconds
+max_retries
+retry_jitter_seconds
 ```
 
 Exemplo V2.5:
@@ -122,6 +125,9 @@ output=/Volumes/<catalog>/<schema>/<volume>/raw/noaa/ghcnd_nyc/2025
 storage_datasetid=GHCND_NYC
 secret_scope=kv-lakehouse
 secret_key=noaa-token
+sleep_seconds=0.25
+max_retries=3
+retry_jitter_seconds=1.0
 ```
 
 ### Ingest Taxi Zone Lookup
