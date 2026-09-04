@@ -22,7 +22,8 @@ estudar o projeto nao precisa seguir exatamente a ordem numerica.
 4. `03_plano_azure_databricks.md` - plano de infraestrutura cloud.
 5. `04_orquestracao_adf_databricks.md` - ADF chamando Databricks.
 6. `05_referencias_tecnicas.md` - notas praticas de Spark, Delta e Azure.
-7. `06_historico_refatoracao.md` - diario tecnico da refatoracao.
+7. `07_confiabilidade_dataops.md` - recuperacao, SLOs e maturidade operacional.
+8. `06_historico_refatoracao.md` - diario tecnico da refatoracao.
 
 Resumo da logica:
 
@@ -31,7 +32,8 @@ Resumo da logica:
 2. Entender tabelas e campos.
 3. Executar local/dev.
 4. Planejar Azure/Databricks.
-5. Consultar referencias e historico quando precisar.
+5. Entender confiabilidade/DataOps.
+6. Consultar referencias e historico quando precisar.
 ```
 
 ## Arquivos
@@ -116,6 +118,23 @@ ordem recomendada
 ### `05_referencias_tecnicas.md`
 
 Notas praticas sobre Databricks, Spark, Delta e Azure.
+
+### `07_confiabilidade_dataops.md`
+
+Guia de confiabilidade da V2.
+
+Explica:
+
+```text
+retry/backoff/jitter
+idempotencia
+deduplicacao
+quarantine
+metricas
+SLOs
+recuperacao de falhas
+o que fica para Azure
+```
 
 ### `06_historico_refatoracao.md`
 

@@ -36,11 +36,13 @@ Se voce esta chegando agora no projeto, a ordem mais natural e:
 7. [v2/databricks/README.md](v2/databricks/README.md) - wrappers preparados para Databricks.
 8. [v2/docs/03_plano_azure_databricks.md](v2/docs/03_plano_azure_databricks.md) - plano de retorno para Azure.
 9. [v2/docs/04_orquestracao_adf_databricks.md](v2/docs/04_orquestracao_adf_databricks.md) - ADF orquestrando Databricks.
+10. [v2/docs/07_confiabilidade_dataops.md](v2/docs/07_confiabilidade_dataops.md) - confiabilidade, recuperacao e SLOs.
 
 Arquivos de apoio:
 
 - [v2/docs/README.md](v2/docs/README.md) - mapa da pasta de documentos.
 - [v2/docs/05_referencias_tecnicas.md](v2/docs/05_referencias_tecnicas.md) - notas praticas de Spark, Delta, Databricks e Azure.
+- [v2/docs/07_confiabilidade_dataops.md](v2/docs/07_confiabilidade_dataops.md) - confiabilidade, recuperacao e SLOs da V2.
 - [v2/docs/06_historico_refatoracao.md](v2/docs/06_historico_refatoracao.md) - diario tecnico da refatoracao.
 
 ## Fontes

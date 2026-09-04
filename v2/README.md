@@ -30,6 +30,7 @@ Se voce esta estudando o projeto, siga esta trilha:
 12. v2/databricks/README.md
 13. v2/docs/03_plano_azure_databricks.md
 14. v2/docs/04_orquestracao_adf_databricks.md
+15. v2/docs/07_confiabilidade_dataops.md
 ```
 
 Mapa da pasta de documentos:
@@ -42,6 +43,7 @@ Documentos de apoio:
 
 ```text
 v2/docs/05_referencias_tecnicas.md
+v2/docs/07_confiabilidade_dataops.md
 v2/docs/06_historico_refatoracao.md
 ```
 
