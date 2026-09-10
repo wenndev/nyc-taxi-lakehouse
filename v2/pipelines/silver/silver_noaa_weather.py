@@ -10,6 +10,7 @@ from pathlib import Path
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql import functions as F
+from pyspark.sql import types as T
 
 from v2.config.paths import (
     noaa_bronze_dir,
@@ -95,7 +96,26 @@ def run_silver_noaa_weather(
     return df
 
 
+def validate_metric_units(df: DataFrame) -> None:
+    if "unidades_noaa" not in df.columns:
+        raise DataQualityCriticalError(
+            "NOAA Bronze has no unidades_noaa metadata. Rebuild Bronze from "
+            "RAW with a verified units=metric manifest before running Silver."
+        )
+    if not isinstance(df.schema["unidades_noaa"].dataType, T.StringType):
+        raise DataQualityCriticalError("NOAA unidades_noaa must be a string: metric.")
+    invalid_units = df.filter(
+        F.col("unidades_noaa").isNull() | (F.col("unidades_noaa") != "metric")
+    )
+    if invalid_units.limit(1).count():
+        raise DataQualityCriticalError(
+            "NOAA Silver requires unidades_noaa=metric on every Bronze page. "
+            "No automatic conversion of standard or unknown units is performed."
+        )
+
+
 def normalize_results(df: DataFrame) -> DataFrame:
+    validate_metric_units(df)
     return df.select(
         F.explode("results").alias("resultado"),
         F.col("arquivo_origem"),

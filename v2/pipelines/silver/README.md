@@ -166,6 +166,30 @@ poetry run validate-silver-taxi-zone-lookup
 
 ## NOAA Weather
 
+A Silver exige `unidades_noaa=metric` em todas as paginas Bronze antes de
+explodir os resultados. Unidade ausente, nula, desconhecida ou `standard`
+bloqueia a publicacao, mesmo com `--skip-quality`. A coluna de controle nao
+precisa ser adicionada a configuracao das observacoes DQ: ela e validada antes
+da normalizacao, que preserva o schema de observacao existente.
+
+A API CDO ja escala/converte a resposta quando `units=metric` e informado;
+nao aplicamos uma segunda divisao por dez ou conversao de temperatura.
+Referencia: [parametro units da API NOAA](https://www.ncei.noaa.gov/cdo-web/webservices/v2#data).
+
+Bronze antiga sem `unidades_noaa` deve ser reconstruida a partir do RAW e seu
+manifesto metrico. Nao preencha a coluna manualmente assumindo a unidade e nao
+refaca o download se os JSONs e o manifesto correto ja estiverem disponiveis:
+
+```bash
+poetry run bronze-noaa-weather --year 2025 --mode overwrite --skip-count
+poetry run silver-noaa-weather --year 2025 --mode overwrite --skip-count
+poetry run validate-silver-noaa-weather --year 2025
+```
+
+Esses comandos substituem as tabelas NOAA nos destinos configurados. Confira
+os caminhos com `--dry-run` antes. A migracao dos dados locais nao e realizada
+automaticamente pelo commit.
+
 Entrada:
 
 ```text

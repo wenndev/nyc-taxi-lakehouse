@@ -100,4 +100,15 @@ Responsabilidade desta etapa:
 - ler os JSONs brutos paginados da NOAA;
 - preservar `metadata` e `results`;
 - adicionar arquivo de origem e timestamp de processamento;
+- exigir `_manifest.json` do endpoint CDO com `units=metric` e registrar
+  `unidades_noaa=metric` em cada pagina Bronze;
 - salvar em Delta.
+
+O manifesto e lido pelo filesystem Hadoop da sessao Spark, pois o leitor JSON
+ignora arquivos com prefixo `_`. Isso usa a configuracao de storage da sessao;
+o acesso S3 ainda precisa ser validado no Glue.
+
+Nao ha conversao numerica nesta camada. Manifesto ausente, unidade desconhecida
+ou `standard` impedem a escrita. O cliente de ingestao ainda permite baixar
+`standard` para RAW, mas esse lote nao pode entrar no pipeline metrico atual.
+A verificacao de unidades nao substitui a verificacao de completude do lote.

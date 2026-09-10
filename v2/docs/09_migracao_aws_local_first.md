@@ -6,6 +6,67 @@ abandonar a execucao local.
 Nenhum token, senha, access key ou secret key deve ser salvo neste arquivo ou no
 Git.
 
+## Ponto De Retomada - 10/09/2026
+
+Branch de trabalho: `v2-refactor-ml`. Consulte tambem
+[a auditoria e suas atualizacoes](10_auditoria_pre_aws.md).
+
+Concluido no codigo nesta rodada:
+
+1. C1: uma coluna extra tolerada nao reduz FAIL para WARNING na Data Quality.
+2. C2: resume NOAA identifica a consulta; manifesto registra falhas e overwrite
+   limpa as paginas antigas do lote. Testes usam respostas simuladas.
+3. C3: Star Schema rejeita append antes de ler/gravar; overwrite e replaceWhere
+   mensal foram mantidos e testados em Delta temporario.
+4. C4: Bronze valida units=metric no manifesto e registra unidades_noaa; Silver
+   bloqueia unidades diferentes ou ausentes, sem conversao silenciosa.
+
+Ultima verificacao desta base: 117 testes aprovados em 161,518 segundos,
+executando `poetry run python -B -m unittest discover -v`.
+
+Dados observados nesta maquina: RAW TLC com 48.722.602 registros; RAW NOAA com
+76 paginas, 75.991 observacoes e 365 dias de 2025. A Gold dev validada possui
+97.060 corridas de dois dias. Silver TLC anual e Gold anual completas ainda nao
+foram validadas nesta maquina. Os testes novos usam dados temporarios: as
+tabelas reais nao foram migradas pelo codigo nem pelo commit.
+
+Antes de executar novamente a Silver NOAA com a Bronze antiga, siga os comandos
+de [migracao do contrato de unidades](../pipelines/silver/README.md#noaa-weather).
+O RAW metrico existente pode ser reaproveitado; nao baixar o ano novamente
+so para adicionar o metadado na Bronze.
+
+AWS: Budget e bucket criados; prefixos `raw/` e `delta/bronze`, `silver`, `gold`,
+`quarantine`, `monitoring` listados no CloudShell. Nenhum job Glue ou Step
+Functions foi executado nesta rodada. A ultima identidade STS compartilhada
+na conversa era root. Antes de novas operacoes, preparar identidade de trabalho
+com menor privilegio e MFA; nao criar chaves de acesso root.
+
+O proximo ajuste local prioritario e C5: proteger backfill contra entradas
+parciais/vazias e limites incoerentes. Tambem faltam o gate de completude do
+manifesto na Bronze, reconciliacao/cobertura anual TLC, IO S3 dos downloaders e
+prova de runtime/permissoes Glue. Nao considerar AWS pronta apenas porque os
+paths aceitam `s3://`.
+
+Na outra maquina:
+
+1. Obter esta branch apos o push e conferir `git status` e `git log -1`.
+2. Ler este ponto de retomada e as atualizacoes C1-C4 da auditoria.
+3. Preparar Python/Java e instalar as dependencias com Poetry conforme runbook.
+4. Recriar `.env` localmente apenas quando precisar ingerir dados. Nunca
+   copiar tokens para a documentacao ou para o Git.
+5. Rodar `poetry run python -m unittest discover -v`. Os testes nao exigem
+   conta AWS nem token NOAA; os testes Spark precisam de Java e sockets locais.
+6. Conferir quais dados estao disponiveis antes do runner dev: RAW, Delta,
+   `.venv`, `.env` e logs em `/tmp` nao acompanham o clone do repositorio.
+
+Pedido sugerido para o agente:
+
+> Leia v2/docs/09_migracao_aws_local_first.md e as atualizacoes de
+> v2/docs/10_auditoria_pre_aws.md. C1-C4 foram implementados; confirme o Git e
+> os testes. Nao reescreva o core nem crie infraestrutura automaticamente.
+> Vamos revisar primeiro C5 e depois fazer uma prova pequena S3/Glue,
+> preservando a execucao local e controlando custo.
+
 ## Ideia Principal
 
 A V2 nao deve ser refeita do zero na AWS.
@@ -220,6 +281,10 @@ comando no terminal normal.
 ## Proximo Passo AWS
 
 Ainda nao estamos rodando Glue nem Step Functions.
+
+Antes desta fase cloud, concluir os bloqueios locais e a identidade de trabalho
+descritos no ponto de retomada acima. As fases abaixo sao planejamento, nao
+recursos ja implementados.
 
 O proximo passo incremental e:
 

@@ -170,6 +170,12 @@ Taxi Zone Lookup:
 
 A ingestion NOAA gera `_manifest.json`.
 
+O manifesto identifica a consulta antes de salvar paginas. A retomada recusa
+outro periodo, escopo ou paginacao no mesmo destino. `--overwrite` reinicia o
+lote e remove suas paginas antigas; nao e uma troca atomica de versoes do RAW.
+Estados `failed`, `incomplete` e `in_progress` nao autorizam publicar Bronze.
+Detalhes e limites estao no [guia de ingestao](../pipelines/ingestion/README.md#retomada-e-reinicio-do-lote-noaa).
+
 Ele registra:
 
 ```text

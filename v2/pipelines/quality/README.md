@@ -189,6 +189,12 @@ na porcentagem de qualidade. Na NOAA, algumas regras tambem sao criticas. Na TLC
 os registros invalidos sao removidos da Silver e auditados na quarentena; o
 pipeline so bloqueia se a qualidade ficar abaixo do limite de `FAIL`.
 
+Uma coluna extra tolerada (`fail_on_unexpected_columns=False`) transforma um
+resultado que seria `PASS` em `WARNING`, mas nunca transforma `FAIL` em
+`WARNING`. Por exemplo, com os limites padrao, 100% de registros validos e uma
+coluna extra resultam em `WARNING`; 90% de registros validos com essa mesma
+coluna resultam em `FAIL`. Falhas criticas continuam tendo prioridade.
+
 ## Validacao Atual
 
 Execucao local com NOAA V2.5:

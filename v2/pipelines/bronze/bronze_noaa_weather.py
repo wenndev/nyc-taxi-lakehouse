@@ -20,14 +20,15 @@
 from __future__ import annotations
 
 import argparse
+import json
 from pathlib import Path
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import current_timestamp, input_file_name
+from pyspark.sql.functions import current_timestamp, input_file_name, lit
 
 from v2.config.paths import noaa_bronze_dir, noaa_raw_dir
 from v2.config.spark import create_spark
-from v2.config.sources import NOAA_GHCND_NYC_STORAGE_ID
+from v2.config.sources import NOAA_CDO_DATA_URL, NOAA_GHCND_NYC_STORAGE_ID
 from v2.platform.delta import write_delta_table
 
 
@@ -39,6 +40,34 @@ def is_local_path(path: str) -> bool:
     return "://" not in path
 
 
+def read_metric_units(spark: SparkSession, input_path: str) -> str:
+    """Confirma a unidade no manifesto RAW sem presumir unidades pelo valor."""
+    # Spark JSON ignores '_' files; read the manifest through its Hadoop filesystem.
+    context = spark.sparkContext
+    jvm = context._jvm
+    path = jvm.org.apache.hadoop.fs.Path(f"{input_path.rstrip('/')}/_manifest.json")
+    filesystem = path.getFileSystem(context._jsc.hadoopConfiguration())
+    stream = filesystem.open(path)
+    try:
+        manifest = json.loads(jvm.org.apache.commons.io.IOUtils.toString(stream, "UTF-8"))
+    finally:
+        stream.close()
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("params"), list):
+        raise ValueError("NOAA Bronze requires a CDO API manifest with units=metric.")
+    units = [
+        pair[1]
+        for pair in manifest["params"]
+        if isinstance(pair, list) and len(pair) == 2 and pair[0] == "units"
+    ]
+    if manifest.get("endpoint") != NOAA_CDO_DATA_URL or units != ["metric"]:
+        raise ValueError(
+            "NOAA Bronze requires a CDO API manifest with units=metric. "
+            "Unknown or standard units cannot be labelled as millimeters/Celsius. "
+            "Ingest a verified metric batch into a separate RAW output."
+        )
+    return units[0]
+
+
 def build_bronze_noaa_dataframe(
     spark: SparkSession,
     input_path: str,
@@ -46,14 +75,16 @@ def build_bronze_noaa_dataframe(
     """
     Cria o DataFrame Bronze da NOAA a partir das páginas JSON brutas.
 
-    Adiciona metadados de origem do arquivo e timestamp de processamento.
+    Confirma units=metric no manifesto e adiciona unidade, origem e timestamp.
     Não persiste os dados.
     """
+    units = read_metric_units(spark, input_path)
     return (
         spark.read.option("multiLine", "true")
         .json(json_page_pattern(input_path))
         .withColumn("arquivo_origem", input_file_name())
         .withColumn("data_processamento_bronze", current_timestamp())
+        .withColumn("unidades_noaa", lit(units))
     )
 
 

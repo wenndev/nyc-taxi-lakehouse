@@ -805,10 +805,9 @@ def determine_status(
     if has_critical_schema_error(schema_validation, config) or has_critical_rule:
         return QualityStatus.FAIL
 
-    if schema_validation.has_errors:
-        return QualityStatus.WARNING
-
     if quality_percentage >= config.thresholds.pass_min_percentage:
+        if schema_validation.has_errors:
+            return QualityStatus.WARNING
         return QualityStatus.PASS
 
     if quality_percentage >= config.thresholds.warning_min_percentage:

@@ -47,6 +47,7 @@ def run_gold_star_schema(
     mode: str = "overwrite",
     replace_partition: YearMonthPartition | None = None,
 ) -> GoldStarSchemaTables:
+    validate_star_schema_write_mode(mode)
     validate_replace_partition_write_mode(mode, replace_partition)
     df_tlc = spark.read.format("delta").load(tlc_input_path)
     df_noaa = spark.read.format("delta").load(noaa_input_path)
@@ -277,12 +278,21 @@ def translate_day_of_week(dia_semana_num):
     )
 
 
+def validate_star_schema_write_mode(mode: str) -> None:
+    if mode != "overwrite":
+        raise ValueError(
+            "Gold Star Schema requires mode='overwrite'; append can duplicate "
+            "dimension keys and trips. Use replace_month for monthly fact replacement."
+        )
+
+
 def write_gold_tables(
     tables: GoldStarSchemaTables,
     output_path: str,
     mode: str,
     fact_replace_where: str | None = None,
 ) -> None:
+    validate_star_schema_write_mode(mode)
     table_write_configs = [
         ("dim_data", tables.dim_data, None),
         ("dim_clima", tables.dim_clima, None),
@@ -325,7 +335,12 @@ def main() -> int:
     parser.add_argument("--noaa-input", default=None)
     parser.add_argument("--taxi-zone-lookup-input", default=None)
     parser.add_argument("--output", default=None)
-    parser.add_argument("--mode", default="overwrite", choices=["overwrite", "append"])
+    parser.add_argument(
+        "--mode",
+        default="overwrite",
+        choices=["overwrite"],
+        help="Overwrite Gold tables; use --replace-month for monthly fact replacement.",
+    )
     parser.add_argument("--replace-year", type=int, default=None)
     parser.add_argument("--replace-month", type=int, default=None)
     parser.add_argument("--dry-run", action="store_true")

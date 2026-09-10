@@ -292,71 +292,98 @@ def download_pages(
     page_number = 1
     expected_count: int | None = None
     downloaded_results = 0
-
-    while True:
-        url = build_url(base_params, limit=limit, offset=offset)
-        destination = output_dir / f"page_{page_number:06d}_offset_{offset:09d}.json"
-
-        if destination.exists() and not overwrite:
-            print(f"SKIP existing: {destination}")
-            payload = read_json(destination)
-        else:
-            print(f"Downloading page {page_number}: offset={offset}")
-            payload = request_json(
-                url=url,
-                token=token,
-                max_retries=max_retries,
-                sleep_seconds=sleep_seconds,
-                retry_jitter_seconds=retry_jitter_seconds,
-            )
-            write_json(destination, payload)
-            print(f"Saved: {destination}")
-
-        resultset = payload.get("metadata", {}).get("resultset", {})
-        expected_count = int(resultset.get("count", expected_count or 0))
-        results = payload.get("results", [])
-        result_count = len(results)
-        downloaded_results += result_count
-
-        print(
-            f"Page {page_number}: results={result_count}, "
-            f"downloaded={downloaded_results}, expected={expected_count}"
+    pages = 0
+    status = "failed"
+    download_complete = False
+    existing_pages = set(output_dir.glob("page_*_offset_*.json"))
+    if not overwrite:
+        validate_resume_manifest(
+            output_dir, base_params, limit, initial_offset, storage_datasetid
         )
 
-        if result_count == 0:
-            break
+    def save_progress(current_status: str, complete: bool = False) -> None:
+        write_manifest(
+            output_dir=output_dir,
+            base_params=base_params,
+            limit=limit,
+            initial_offset=initial_offset,
+            sleep_seconds=sleep_seconds,
+            max_retries=max_retries,
+            retry_jitter_seconds=retry_jitter_seconds,
+            storage_datasetid=storage_datasetid,
+            pages=pages,
+            downloaded_results=downloaded_results,
+            expected_count=expected_count,
+            status=current_status,
+            download_complete=complete,
+        )
 
-        if expected_count and offset + result_count > expected_count:
-            break
+    if overwrite:
+        # Invalidate the old identity before cleanup, including interrupted cleanup.
+        (output_dir / "_manifest.json").unlink(missing_ok=True)
+        for path in existing_pages:
+            path.unlink()
+        existing_pages.clear()
 
-        if result_count < limit:
-            break
+    # Register the query before saving pages so an interrupted run can resume.
+    save_progress("in_progress")
+    try:
+        visited_pages: set[Path] = set()
+        while True:
+            url = build_url(base_params, limit=limit, offset=offset)
+            destination = output_dir / f"page_{page_number:06d}_offset_{offset:09d}.json"
+            cached = destination.exists()
 
-        offset += limit
-        page_number += 1
-        time.sleep(sleep_seconds)
+            if cached:
+                print(f"SKIP existing: {destination}")
+                payload = read_json(destination)
+            else:
+                print(f"Downloading page {page_number}: offset={offset}")
+                payload = request_json(
+                    url=url,
+                    token=token,
+                    max_retries=max_retries,
+                    sleep_seconds=sleep_seconds,
+                    retry_jitter_seconds=retry_jitter_seconds,
+                )
 
-    download_complete = is_download_complete(
-        downloaded_results=downloaded_results,
-        expected_count=expected_count,
-    )
-    status = "success" if download_complete else "incomplete"
+            page_count, result_count = validate_page(payload, limit, offset)
+            if expected_count is not None and page_count != expected_count:
+                raise ValueError(
+                    "NOAA result count changed between pages. "
+                    "Use a new --output or restart with --overwrite."
+                )
+            expected_count = page_count
+            if not cached:
+                write_json(destination, payload)
+                print(f"Saved: {destination}")
+            visited_pages.add(destination)
+            pages += 1
+            downloaded_results += result_count
 
-    write_manifest(
-        output_dir=output_dir,
-        base_params=base_params,
-        limit=limit,
-        initial_offset=initial_offset,
-        sleep_seconds=sleep_seconds,
-        max_retries=max_retries,
-        retry_jitter_seconds=retry_jitter_seconds,
-        storage_datasetid=storage_datasetid,
-        pages=page_number,
-        downloaded_results=downloaded_results,
-        expected_count=expected_count,
-        status=status,
-        download_complete=download_complete,
-    )
+            print(
+                f"Page {page_number}: results={result_count}, "
+                f"downloaded={downloaded_results}, expected={expected_count}"
+            )
+
+            if result_count == 0 or offset + result_count > expected_count:
+                break
+            if result_count < limit:
+                break
+
+            offset += limit
+            page_number += 1
+            time.sleep(sleep_seconds)
+
+        if existing_pages - visited_pages:
+            raise ValueError(
+                "NOAA output contains pages outside this download. "
+                "Use a new --output or restart with --overwrite."
+            )
+        download_complete = is_download_complete(downloaded_results, expected_count)
+        status = "success" if download_complete else "incomplete"
+    finally:
+        save_progress(status, download_complete)
 
     if not download_complete:
         print(
@@ -367,6 +394,63 @@ def download_pages(
 
     print(f"NOAA raw files ready at: {output_dir}")
     return 0
+
+
+def validate_resume_manifest(
+    output_dir: Path,
+    base_params: list[tuple[str, str]],
+    limit: int,
+    initial_offset: int,
+    storage_datasetid: str,
+) -> None:
+    manifest_path = output_dir / "_manifest.json"
+    if not manifest_path.exists():
+        if any(output_dir.glob("page_*_offset_*.json")):
+            raise ValueError(
+                "NOAA pages have no manifest to identify their query. "
+                "Use a new --output or restart with --overwrite."
+            )
+        return
+
+    try:
+        manifest = read_json(manifest_path)
+        matches = (
+            isinstance(manifest, dict)
+            and manifest.get("endpoint") == NOAA_CDO_DATA_URL
+            and sorted(manifest["params"]) == sorted([list(pair) for pair in base_params])
+            and manifest.get("limit") == limit
+            and manifest.get("initial_offset") == initial_offset
+            and manifest.get("storage_datasetid") == storage_datasetid
+        )
+    except (ValueError, KeyError, TypeError):
+        matches = False
+
+    if not matches:
+        raise ValueError(
+            "NOAA manifest does not match this query or pagination settings. "
+            "Use a new --output or restart with --overwrite."
+        )
+
+
+def validate_page(payload: dict[str, Any], limit: int, offset: int) -> tuple[int, int]:
+    try:
+        resultset = payload["metadata"]["resultset"]
+        count = resultset["count"]
+        results = payload["results"]
+        valid = (
+            type(count) is int
+            and count >= 0
+            and resultset["offset"] == offset
+            and resultset["limit"] == limit
+            and isinstance(results, list)
+            and len(results) <= min(limit, max(0, count - offset + 1))
+        )
+    except (KeyError, TypeError):
+        valid = False
+
+    if not valid:
+        raise ValueError(f"Invalid NOAA page metadata or results at offset={offset}.")
+    return count, len(results)
 
 
 def request_json(

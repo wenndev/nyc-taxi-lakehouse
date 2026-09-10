@@ -2,6 +2,13 @@
 
 Esta pasta guarda a documentacao da refatoracao V2 / V2.5 do projeto.
 
+Para continuar em outro computador, leia primeiro
+[09_migracao_aws_local_first.md](09_migracao_aws_local_first.md) e
+[10_auditoria_pre_aws.md](10_auditoria_pre_aws.md), incluindo as atualizacoes
+no inicio do relatorio. Ali estao o ponto de parada, as correcoes C1-C4 e as
+pendencias. Os documentos e diagramas Azure sao uma alternativa historica;
+AWS e o proximo destino planejado, sem abandonar a execucao local.
+
 ## Como Usar Esta Pasta
 
 Aqui ficam os documentos longos da V2. Esta pasta nao substitui os READMEs das
@@ -181,6 +188,12 @@ o que fica para Azure
 ### `06_historico_refatoracao.md`
 
 Registro historico das decisoes tomadas durante a refatoracao.
+
+### `10_auditoria_pre_aws.md`
+
+Auditoria do codigo e dos dados disponiveis em 10/09/2026, com evidencias de
+testes, riscos e atualizacoes das correcoes. O corpo original e historico;
+consulte as atualizacoes do inicio para saber o que ja foi corrigido.
 
 ## Diagramas
 

@@ -187,6 +187,32 @@ class TLCQualityValidatorTest(unittest.TestCase):
         self.assertEqual(result.status, QualityStatus.WARNING)
         self.assertEqual(result.metrics.quality_percentage, 50.0)
 
+    def test_extra_column_does_not_hide_insufficient_quality(self) -> None:
+        invalid_trip = list(valid_trip())
+        invalid_trip[16] = -5.0
+        df = self.make_df([tuple(invalid_trip)]).withColumn("coluna_extra", F.lit("nova"))
+
+        result = validate_tlc_data(df, pipeline_run_id="tlc-extra-column-invalid")
+
+        self.assertEqual(result.status, QualityStatus.FAIL)
+        self.assertEqual(result.metrics.pipeline_status, QualityStatus.FAIL)
+        self.assertEqual(result.metrics.quality_percentage, 0.0)
+        self.assertEqual(result.metrics.unexpected_columns, ("coluna_extra",))
+        self.assertEqual(result.valid_records.count(), 0)
+        self.assertEqual(result.invalid_records.count(), 1)
+
+    def test_extra_column_with_valid_records_remains_warning(self) -> None:
+        df = self.make_df([valid_trip()]).withColumn("coluna_extra", F.lit("nova"))
+
+        result = validate_tlc_data(df, pipeline_run_id="tlc-extra-column-valid")
+
+        self.assertEqual(result.status, QualityStatus.WARNING)
+        self.assertEqual(result.metrics.pipeline_status, QualityStatus.WARNING)
+        self.assertEqual(result.metrics.quality_percentage, 100.0)
+        self.assertEqual(result.metrics.unexpected_columns, ("coluna_extra",))
+        self.assertEqual(result.valid_records.count(), 1)
+        self.assertEqual(result.invalid_records.count(), 0)
+
     def test_optional_nulls_do_not_invalidate_record(self) -> None:
         trip = list(valid_trip())
         trip[3] = None

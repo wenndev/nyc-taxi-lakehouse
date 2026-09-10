@@ -48,6 +48,32 @@ poetry run gold-star-schema \
   --taxi-zone-lookup-input v2/data/delta/silver/nyc_tlc/taxi_zone_lookup
 ```
 
+### Escrita e reprocessamento do Star Schema
+
+Este pipeline aceita somente `mode=overwrite`. `append` e rejeitado antes de
+ler as entradas ou gravar qualquer tabela, inclusive em chamadas Python e no
+wrapper Databricks. Acrescentar novamente as dimensoes duplicaria suas chaves;
+uma reexecucao tambem poderia duplicar corridas. O modo nao e convertido
+silenciosamente de append para overwrite.
+
+Sem recorte mensal, overwrite substitui as quatro tabelas. Para reprocessar
+marco na fato usando as entradas Silver do ano:
+
+```bash
+poetry run gold-star-schema --year 2025 --mode overwrite --replace-month 3 --skip-count
+```
+
+Nesse caso, `replaceWhere` limita a substituicao da `fact_trips` a marco. As
+tres dimensoes continuam sendo reconstruidas por inteiro. Mantenha a Silver
+NOAA anual e as fontes de localizacao completas; uma entrada parcial pode
+remover chaves necessarias aos outros meses. As protecoes adicionais para
+esse caso ainda estao pendentes na auditoria (C5).
+
+Nao ha transacao unica envolvendo as quatro tabelas. Continue executando o
+validador abaixo depois da carga. O helper Delta compartilhado ainda permite
+append para usos como historico de metricas; esta restricao e especifica do
+Star Schema, nao altera o contrato da Gold diaria.
+
 Validacao automatica depois da Gold:
 
 ```bash

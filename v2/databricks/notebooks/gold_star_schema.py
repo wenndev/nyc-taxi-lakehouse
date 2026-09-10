@@ -57,7 +57,10 @@ spark = get_spark()
 
 # COMMAND ----------
 
-from v2.pipelines.gold.gold_star_schema import run_gold_star_schema  # noqa: E402
+from v2.pipelines.gold.gold_star_schema import (  # noqa: E402
+    run_gold_star_schema,
+    validate_star_schema_write_mode,
+)
 from v2.platform.partitions import (  # noqa: E402
     resolve_year_month_partition,
     validate_replace_partition_write_mode,
@@ -98,6 +101,7 @@ noaa_input_path = optional_widget("noaa_input")
 taxi_zone_lookup_input_path = optional_widget("taxi_zone_lookup_input")
 output_path = optional_widget("output")
 mode = widget("mode")
+validate_star_schema_write_mode(mode)
 replace_year = int(widget("replace_year")) if optional_widget("replace_year") else None
 replace_month = int(widget("replace_month")) if optional_widget("replace_month") else None
 replace_partition = resolve_year_month_partition(

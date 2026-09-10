@@ -283,6 +283,13 @@ quarantine e monitoring devem ser gerados
 
 ### 6.4 Validacao Pos-Silver
 
+Se a Silver NOAA informar `Bronze has no unidades_noaa metadata`, a Bronze e
+anterior ao contrato de unidades. Confira o RAW e `_manifest.json` com
+`units=metric`, execute novamente `bronze-noaa-weather --mode overwrite` e
+depois `silver-noaa-weather --mode overwrite`. Nao e necessario baixar NOAA
+novamente se o RAW metrico ja estiver presente. Nao assuma a unidade de um lote
+sem manifesto. Consulte o [guia da Silver NOAA](../pipelines/silver/README.md#noaa-weather).
+
 NYC TLC:
 
 ```bash
@@ -308,6 +315,11 @@ Todos os validadores Silver devem retornar PASS
 ```
 
 ### 6.5 Gold Star Schema
+
+O Star Schema aceita somente `--mode overwrite` (padrao). `append` e bloqueado
+para evitar duplicacao das dimensoes e das corridas em reexecucoes. Para um
+backfill da fato, use `--replace-month`; as dimensoes continuam sendo
+reconstruidas por inteiro e exigem suas entradas completas.
 
 Criar:
 
@@ -943,6 +955,10 @@ Para reprocessar apenas a `fact_trips` de um mes, adicionar:
 ```text
 replace_month=1
 ```
+
+Esse recorte vale somente para a fato. As dimensoes sao sobrescritas por
+inteiro; mantenha a NOAA anual e as fontes de localizacao completas. O widget
+`mode` deste notebook aceita apenas `overwrite`, inclusive em dry run.
 
 ### validate_gold_star_schema
 

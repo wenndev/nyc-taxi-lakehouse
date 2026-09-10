@@ -119,6 +119,12 @@ Principais colunas:
 | `results` | array | Lista de observacoes climaticas retornadas na pagina. |
 | `arquivo_origem` | string | Nome do JSON de origem. |
 | `data_processamento_bronze` | timestamp | Momento em que a pagina foi carregada para Bronze. |
+| `unidades_noaa` | string | `metric`, obtido do manifesto RAW CDO; obrigatorio para a Silver. Nao e inferido pelos valores. |
+
+A Bronze exige um manifesto com `units=metric`. A Silver bloqueia paginas sem
+essa informacao ou com outra unidade, inclusive no modo `--skip-quality`.
+Os valores ja metricos da API CDO nao sao convertidos novamente. Tabelas Bronze
+anteriores a esse contrato precisam ser reconstruidas a partir do RAW validado.
 
 ## Silver NYC TLC
 
