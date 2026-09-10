@@ -10,6 +10,7 @@ from pathlib import Path
 from pyspark.sql import DataFrame, SparkSession
 
 from v2.config.paths import taxi_zone_lookup_bronze_dir, taxi_zone_lookup_raw_dir
+from v2.config.settings import join_storage_path
 from v2.config.sources import TAXI_ZONE_LOOKUP_FILENAME
 from v2.config.spark import create_spark
 from v2.platform.delta import write_delta_table
@@ -40,7 +41,9 @@ def main() -> int:
     input_path = (
         args.input
         if args.input
-        else str(taxi_zone_lookup_raw_dir() / TAXI_ZONE_LOOKUP_FILENAME)
+        else str(
+            join_storage_path(taxi_zone_lookup_raw_dir(), TAXI_ZONE_LOOKUP_FILENAME)
+        )
     )
     output_path = args.output if args.output else str(taxi_zone_lookup_bronze_dir())
 

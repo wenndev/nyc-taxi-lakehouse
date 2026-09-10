@@ -42,6 +42,31 @@ class SettingsTest(unittest.TestCase):
         self.assertIsNone(settings.spark.master)
         self.assertEqual(settings.spark.shuffle_partitions, "64")
 
+    def test_aws_settings_preserve_s3_roots(self) -> None:
+        settings = load_settings(
+            {
+                "NYC_TAXI_ENV": "aws",
+                "NYC_TAXI_STORAGE_MODE": "s3",
+                "NYC_TAXI_RAW_ROOT": "s3://example-lakehouse/raw/",
+                "NYC_TAXI_DELTA_ROOT": "s3://example-lakehouse/delta/",
+            }
+        )
+
+        self.assertEqual(settings.environment, RuntimeEnvironment.AWS)
+        self.assertEqual(settings.storage_mode, StorageMode.S3)
+        self.assertEqual(settings.raw_root, "s3://example-lakehouse/raw")
+        self.assertEqual(settings.delta_root, "s3://example-lakehouse/delta")
+        self.assertEqual(settings.gold_root, "s3://example-lakehouse/delta/gold")
+        self.assertEqual(
+            settings.quarantine_root,
+            "s3://example-lakehouse/delta/quarantine",
+        )
+        self.assertEqual(
+            settings.monitoring_root,
+            "s3://example-lakehouse/delta/monitoring",
+        )
+        self.assertIsNone(settings.spark.master)
+
     def test_invalid_environment_fails_fast(self) -> None:
         with self.assertRaises(ValueError):
             parse_runtime_environment("invalid")

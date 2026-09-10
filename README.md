@@ -36,12 +36,18 @@ Se voce esta chegando agora no projeto, a ordem mais natural e:
 7. [v2/databricks/README.md](v2/databricks/README.md) - wrappers preparados para Databricks.
 8. [v2/docs/03_plano_azure_databricks.md](v2/docs/03_plano_azure_databricks.md) - plano de retorno para Azure.
 9. [v2/docs/04_orquestracao_adf_databricks.md](v2/docs/04_orquestracao_adf_databricks.md) - ADF orquestrando Databricks.
-10. [v2/docs/07_confiabilidade_dataops.md](v2/docs/07_confiabilidade_dataops.md) - confiabilidade, recuperacao e SLOs.
+10. [v2/docs/08_arquitetura_azure_v2.md](v2/docs/08_arquitetura_azure_v2.md) - explicacao da arquitetura Azure V2.
+11. [v2/docs/arquitetura_azure_v2.excalidraw](v2/docs/arquitetura_azure_v2.excalidraw) - diagrama editavel no Excalidraw.
+12. [v2/docs/09_migracao_aws_local_first.md](v2/docs/09_migracao_aws_local_first.md) - ponte entre execucao local e AWS.
+13. [v2/docs/07_confiabilidade_dataops.md](v2/docs/07_confiabilidade_dataops.md) - confiabilidade, recuperacao e SLOs.
 
 Arquivos de apoio:
 
 - [v2/docs/README.md](v2/docs/README.md) - mapa da pasta de documentos.
 - [v2/docs/05_referencias_tecnicas.md](v2/docs/05_referencias_tecnicas.md) - notas praticas de Spark, Delta, Databricks e Azure.
+- [v2/docs/08_arquitetura_azure_v2.md](v2/docs/08_arquitetura_azure_v2.md) - arquitetura planejada para Azure.
+- [v2/docs/arquitetura_azure_v2.excalidraw](v2/docs/arquitetura_azure_v2.excalidraw) - versao editavel do diagrama de arquitetura.
+- [v2/docs/09_migracao_aws_local_first.md](v2/docs/09_migracao_aws_local_first.md) - plano de retomada em casa e migracao incremental para AWS.
 - [v2/docs/07_confiabilidade_dataops.md](v2/docs/07_confiabilidade_dataops.md) - confiabilidade, recuperacao e SLOs da V2.
 - [v2/docs/06_historico_refatoracao.md](v2/docs/06_historico_refatoracao.md) - diario tecnico da refatoracao.
 

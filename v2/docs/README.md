@@ -21,9 +21,12 @@ estudar o projeto nao precisa seguir exatamente a ordem numerica.
 3. `01_runbook_execucao.md` - como executar e validar.
 4. `03_plano_azure_databricks.md` - plano de infraestrutura cloud.
 5. `04_orquestracao_adf_databricks.md` - ADF chamando Databricks.
-6. `05_referencias_tecnicas.md` - notas praticas de Spark, Delta e Azure.
-7. `07_confiabilidade_dataops.md` - recuperacao, SLOs e maturidade operacional.
-8. `06_historico_refatoracao.md` - diario tecnico da refatoracao.
+6. `08_arquitetura_azure_v2.md` - explicacao da arquitetura cloud planejada.
+7. `arquitetura_azure_v2.excalidraw` - diagrama editavel da arquitetura Azure.
+8. `09_migracao_aws_local_first.md` - como continuar localmente e preparar AWS.
+9. `05_referencias_tecnicas.md` - notas praticas de Spark, Delta e Azure.
+10. `07_confiabilidade_dataops.md` - recuperacao, SLOs e maturidade operacional.
+11. `06_historico_refatoracao.md` - diario tecnico da refatoracao.
 
 Resumo da logica:
 
@@ -115,6 +118,45 @@ jobs esperados
 ordem recomendada
 ```
 
+### `08_arquitetura_azure_v2.md`
+
+Diagrama da arquitetura planejada para executar a V2 no Azure.
+
+Explica:
+
+```text
+fontes externas
+ADF
+Databricks Jobs
+ADLS Gen2
+Bronze, Silver e Gold
+quarantine e monitoring
+Power BI, Databricks SQL, EDA e ML
+```
+
+Arquivo editavel:
+
+```text
+arquitetura_azure_v2.excalidraw
+```
+
+### `09_migracao_aws_local_first.md`
+
+Documento de retomada para continuar o projeto em outra maquina e migrar para
+AWS sem reescrever a V2.
+
+Explica:
+
+```text
+ligacao entre local e AWS
+decisoes do bucket S3
+configuracao por variaveis de ambiente
+estado atual da migracao
+como retomar em casa
+proximas fases AWS
+o que nao deve ser feito agora
+```
+
 ### `05_referencias_tecnicas.md`
 
 Notas praticas sobre Databricks, Spark, Delta e Azure.
@@ -143,6 +185,9 @@ Registro historico das decisoes tomadas durante a refatoracao.
 ## Diagramas
 
 ```text
+08_arquitetura_azure_v2.md
+arquitetura_azure_v2.excalidraw
+09_migracao_aws_local_first.md
 star_schema_v2.5.excalidraw
 star_schema_v2.5.excalidraw.png
 arquitetura_v1.jpg

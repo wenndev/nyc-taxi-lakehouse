@@ -10,17 +10,21 @@ from dataclasses import dataclass
 from enum import StrEnum
 from pathlib import Path
 
+StoragePath = Path | str
+
 
 class RuntimeEnvironment(StrEnum):
     LOCAL = "local"
     DATABRICKS = "databricks"
     AZURE = "azure"
+    AWS = "aws"
 
 
 class StorageMode(StrEnum):
     LOCAL = "local"
     DATABRICKS_VOLUME = "databricks_volume"
     ADLS = "adls"
+    S3 = "s3"
 
 
 @dataclass(frozen=True)
@@ -40,21 +44,21 @@ class ProjectSettings:
     environment: RuntimeEnvironment
     storage_mode: StorageMode
     v2_root: Path
-    raw_root: Path
-    delta_root: Path
+    raw_root: StoragePath
+    delta_root: StoragePath
     spark: SparkSettings
 
     @property
-    def gold_root(self) -> Path:
-        return self.delta_root / "gold"
+    def gold_root(self) -> StoragePath:
+        return join_storage_path(self.delta_root, "gold")
 
     @property
-    def quarantine_root(self) -> Path:
-        return self.delta_root / "quarantine"
+    def quarantine_root(self) -> StoragePath:
+        return join_storage_path(self.delta_root, "quarantine")
 
     @property
-    def monitoring_root(self) -> Path:
-        return self.delta_root / "monitoring"
+    def monitoring_root(self) -> StoragePath:
+        return join_storage_path(self.delta_root, "monitoring")
 
 
 def load_settings(env: Mapping[str, str] | None = None) -> ProjectSettings:
@@ -66,9 +70,9 @@ def load_settings(env: Mapping[str, str] | None = None) -> ProjectSettings:
         get_config_value(values, "NYC_TAXI_STORAGE_MODE", StorageMode.LOCAL.value)
     )
 
-    v2_root = config_path(
+    v2_root = Path(
         get_config_value(values, "NYC_TAXI_V2_ROOT", str(default_v2_root()))
-    )
+    ).expanduser()
     raw_root = config_path(
         get_config_value(values, "NYC_TAXI_RAW_ROOT", str(v2_root / "data" / "raw"))
     )
@@ -127,8 +131,29 @@ def default_v2_root() -> Path:
     return Path(__file__).resolve().parents[1]
 
 
-def config_path(value: str) -> Path:
-    return Path(value).expanduser()
+def config_path(value: str) -> StoragePath:
+    normalized = value.strip()
+    if is_uri_path(normalized):
+        return normalized.rstrip("/")
+
+    return Path(normalized).expanduser()
+
+
+def is_uri_path(value: str) -> bool:
+    return "://" in value
+
+
+def join_storage_path(root: StoragePath, *parts: object) -> StoragePath:
+    clean_parts = tuple(str(part).strip("/") for part in parts if str(part).strip("/"))
+
+    if isinstance(root, Path):
+        return root.joinpath(*clean_parts)
+
+    root_text = root.rstrip("/")
+    if not clean_parts:
+        return root_text
+
+    return f"{root_text}/{'/'.join(clean_parts)}"
 
 
 def get_config_value(

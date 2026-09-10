@@ -15,6 +15,7 @@ from v2.config.paths import (
     nyc_tlc_raw_dir,
     taxi_zone_lookup_silver_dir,
 )
+from v2.config.settings import join_storage_path
 from v2.config.spark import create_spark
 from v2.pipelines.bronze.bronze_nyc_tlc import run_bronze_nyc_tlc
 from v2.pipelines.gold.gold_daily_weather_demand import (
@@ -264,7 +265,10 @@ def default_paths(year: int, month: int) -> DevSamplePaths:
 
     return DevSamplePaths(
         raw_tlc_input=str(
-            nyc_tlc_raw_dir(year) / f"yellow_tripdata_{year}-{month_label}.parquet"
+            join_storage_path(
+                nyc_tlc_raw_dir(year),
+                f"yellow_tripdata_{year}-{month_label}.parquet",
+            )
         ),
         bronze_tlc_output=str(
             dev_root / "bronze" / "nyc_tlc" / "yellow_sample" / sample_id

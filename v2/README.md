@@ -30,7 +30,9 @@ Se voce esta estudando o projeto, siga esta trilha:
 12. v2/databricks/README.md
 13. v2/docs/03_plano_azure_databricks.md
 14. v2/docs/04_orquestracao_adf_databricks.md
-15. v2/docs/07_confiabilidade_dataops.md
+15. v2/docs/08_arquitetura_azure_v2.md
+16. v2/docs/09_migracao_aws_local_first.md
+17. v2/docs/07_confiabilidade_dataops.md
 ```
 
 Mapa da pasta de documentos:
@@ -58,6 +60,19 @@ Arquitetura original da V1 mantida como referencia historica/comparativa:
 
 ```text
 v2/docs/arquitetura_v1.jpg
+```
+
+Arquitetura planejada da V2 no Azure:
+
+```text
+v2/docs/08_arquitetura_azure_v2.md
+v2/docs/arquitetura_azure_v2.excalidraw
+```
+
+Preparacao incremental para AWS sem abandonar a execucao local:
+
+```text
+v2/docs/09_migracao_aws_local_first.md
 ```
 
 Importante: `v2/data/raw` e `v2/data/delta` nao sao versionados no Git. Para

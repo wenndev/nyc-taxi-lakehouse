@@ -67,6 +67,11 @@ class RunContext:
 def discover_pipeline_run_id(values: Mapping[str, str]) -> str | None:
     for name in (
         "PIPELINE_RUN_ID",
+        "STEP_FUNCTIONS_EXECUTION_ID",
+        "AWS_STEP_FUNCTIONS_EXECUTION_ID",
+        "AWS_GLUE_JOB_RUN_ID",
+        "GLUE_JOB_RUN_ID",
+        "JOB_RUN_ID",
         "ADF_PIPELINE_RUN_ID",
         "DATABRICKS_JOB_RUN_ID",
         "DATABRICKS_RUN_ID",

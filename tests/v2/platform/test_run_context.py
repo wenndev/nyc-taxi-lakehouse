@@ -35,6 +35,18 @@ class RunContextTest(unittest.TestCase):
         self.assertEqual(context.pipeline_run_id, "adf-run-123")
         self.assertEqual(context.environment, RuntimeEnvironment.AZURE)
 
+    def test_create_discovers_aws_pipeline_run_id(self) -> None:
+        context = RunContext.create(
+            pipeline_name="silver-noaa-weather",
+            env={
+                "NYC_TAXI_ENV": "aws",
+                "STEP_FUNCTIONS_EXECUTION_ID": "sf-run-123",
+            },
+        )
+
+        self.assertEqual(context.pipeline_run_id, "sf-run-123")
+        self.assertEqual(context.environment, RuntimeEnvironment.AWS)
+
     def test_create_generates_pipeline_run_id_when_missing(self) -> None:
         context = RunContext.create(
             pipeline_name="gold-star-schema",
@@ -61,6 +73,7 @@ class RunContextTest(unittest.TestCase):
         pipeline_run_id = discover_pipeline_run_id(
             {
                 "PIPELINE_RUN_ID": "manual",
+                "AWS_GLUE_JOB_RUN_ID": "glue",
                 "ADF_PIPELINE_RUN_ID": "adf",
             }
         )

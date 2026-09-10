@@ -518,3 +518,37 @@ fact_trips.clima_id_nulo = 0
 fact_trips.localizacao_partida_id_nulo = 0
 fact_trips.localizacao_chegada_id_nulo = 0
 ```
+
+## Preparacao AWS Local-First
+
+Depois da validacao local da V2/V2.5, foi decidido preparar o projeto para uma
+execucao futura na AWS sem abandonar o fluxo local.
+
+A decisao principal foi manter o mesmo core PySpark em `v2/pipelines` e trocar
+apenas configuracao de ambiente e storage:
+
+```text
+local -> filesystem em v2/data
+aws   -> Amazon S3
+```
+
+Primeira fase implementada:
+
+- `NYC_TAXI_ENV=aws`;
+- `NYC_TAXI_STORAGE_MODE=s3`;
+- `NYC_TAXI_RAW_ROOT=s3://<bucket>/raw`;
+- `NYC_TAXI_DELTA_ROOT=s3://<bucket>/delta`;
+- caminhos S3 preservando `s3://`;
+- `PIPELINE_RUN_ID` como identificador generico;
+- compatibilidade futura com IDs de Step Functions e Glue;
+- testes de configuracao e resolucao de paths.
+
+Na AWS, a primeira protecao criada foi um AWS Budget mensal para controle de
+custo. Depois foi criado um bucket S3 com acesso publico bloqueado, ACLs
+desabilitadas, versionamento desativado para laboratorio e criptografia SSE-S3.
+
+Documento de retomada:
+
+```text
+v2/docs/09_migracao_aws_local_first.md
+```
